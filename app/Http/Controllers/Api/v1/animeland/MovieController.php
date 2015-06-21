@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1;
+namespace App\Http\Controllers\Api\v1\animeland;
 
 use Cache;
 use Carbon\Carbon;
@@ -23,9 +23,9 @@ class MovieController extends Controller
     public function page($page = 1)
     {
 
-        $html = Cache::remember('page_' . $page, 10, function () use ($page) {
+        $html = Cache::remember('animeland_page_' . $page, env('PAGE_CACHE_MIN'), function () use ($page) {
             $client = new Client(array(
-                'base_uri' => env('BASE_URL')
+                'base_uri' => env('BASE_URL_ANIMELAND')
             ));
             $response = $client->get('/page/' . $page);
             $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
