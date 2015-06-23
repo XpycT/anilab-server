@@ -48,12 +48,12 @@ class MovieController extends Controller
                 preg_match("/<b>Режиссёр<\/b>(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_producers);
                 $producers = [];
                 list($output_producers, $producers) = $this->get_sublink_text($output_producers, $producers);
+                // author
+                preg_match("/<b>Автор оригинала<\/b>(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_author);
+                $authors = [];
+                list($output_author, $authors) = $this->get_sublink_text($output_author, $authors);
                 // scenarist
-                preg_match("/<b>Автор оригинала<\/b>(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_scenarist);
-                if(!isset($output_scenarist[1]))
-                {
-                    preg_match("/<b>Сценарий<\/b>(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_scenarist);
-                }
+                preg_match("/<b>Сценарий<\/b>(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_scenarist);
                 $scenarist = [];
                 list($output_scenarist, $scenarist) = $this->get_sublink_text($output_scenarist, $scenarist);
                 //postscoring
@@ -65,6 +65,18 @@ class MovieController extends Controller
                 //torrent
                 preg_match("/<b>Трекер<\/b>.*&nbsp;(.*)&nbsp;/iU", $element->find('.maincont td',1)->innertext, $output_torrent);
                 $torrent = (isset($output_torrent[1]) && trim($output_torrent[1]) == 'да')?true:false;
+
+                preg_match("/<b>Студия<\/b>:(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_studio);
+                $studio = '';
+                if(isset($output_studio[1])){
+                    $result_html = new Htmldom($output_studio[1]);
+                    $studio_array = explode('/',$result_html->find('a',0)->href);
+                    array_pop($studio_array); // empty item
+                    $studio = str_replace('+',' ',array_pop($studio_array));
+                    $studio = str_replace('A 1','A-1',$studio); // A-1 studio name fix
+                    $studio = str_replace('J C','J.C.',$studio); // J.C. studio name fix
+                }
+
 
                 $item = [
                     'id' => $id,
@@ -84,8 +96,10 @@ class MovieController extends Controller
                         'type'=>(isset($output_type[1]))?trim($output_type[1]):'',
                         'aired'=>(isset($output_aired[1]))?trim($output_aired[1]):'',
                         'producers'=>$producers,
-                        'scenarist'=>$scenarist,
+                        'authors'=>$authors,
+                        'scenarist'=>$scenaris1t,
                         'postscoring'=>(isset($output_postscoring[1]))?$output_postscoring[1]:'',
+                        'studio'=>$studio,
                         'online'=>$online,
                         'torrent'=>$torrent
                     ]
