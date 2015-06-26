@@ -97,7 +97,7 @@ class MovieController extends Controller
                         'aired'=>(isset($output_aired[1]))?trim($output_aired[1]):'',
                         'producers'=>$producers,
                         'authors'=>$authors,
-                        'scenarist'=>$scenaris1t,
+                        'scenarist'=>$scenarist,
                         'postscoring'=>(isset($output_postscoring[1]))?$output_postscoring[1]:'',
                         'studio'=>$studio,
                         'online'=>$online,
