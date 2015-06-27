@@ -5,6 +5,7 @@ namespace app\Helpers;
 
 use Cache;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use Yangqi\Htmldom\Htmldom;
 
 class Parser {
@@ -24,6 +25,10 @@ class Parser {
             $service_name = 'vk';
         } else if (strrpos($original_link, "sibnet")) {
             $service_name = 'sibnet';
+        } else if (strrpos($original_link, "kivvi.kz") || strrpos($original_link, "kiwi.kz")) {
+            $service_name = 'kivvi';
+        } else if (strrpos($original_link, "myvi.ru")) {
+            $service_name = 'myvi';
         }
 
         return $service_name;
@@ -39,6 +44,18 @@ class Parser {
     {
         $download_link = '';
         switch (Parser::getVideoService($original_link)) {
+            case 'kivvi':
+                $parts = explode('/', $original_link);
+                array_pop($parts);
+                $videoId = array_pop($parts);
+                $client = new Client();
+                $response = $client->post('http://kivvi.kz/services/watch/download',[
+                    'form_params' => [
+                        'hash'=>$videoId
+                    ]]);
+                $jsonResponse = json_decode($response->getBody(true));
+                $download_link = $jsonResponse->resources->url;
+                break;
             case '24video':
                 //get url
                 $parts = explode('/', $original_link);
@@ -81,11 +98,17 @@ class Parser {
                 break;
             case 'sibnet':
                 $download_link = Cache::remember($original_link, env('PAGE_CACHE_MIN'), function () use ($original_link) {
-                    $client = new Client();
-                    $response = $client->get($original_link);
-                    $body = $response->getBody(true);
-                    preg_match("/'file' : '(.*)m3u8',/iU", $body, $output_html);
-                    $download_link = (isset($output_html[1])) ? 'http://video.sibnet.ru' . $output_html[1] . 'mp4' : false;
+                    try{
+                        $client = new Client();
+                        $response = $client->get($original_link);
+                        $body = $response->getBody(true);
+                        preg_match("/'file' : '(.*)m3u8',/iU", $body, $output_html);
+                        $download_link = (isset($output_html[1])) ? 'http://video.sibnet.ru' . $output_html[1] . 'mp4' : false;
+                    }catch(ClientException $e){
+                        if($e->getResponse()->getStatusCode() == 404){
+                            $download_link = false;
+                        }
+                    }
                     unset($client);
                     return $download_link;
                 });

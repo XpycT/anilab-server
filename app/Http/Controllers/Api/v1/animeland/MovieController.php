@@ -124,6 +124,7 @@ class MovieController extends Controller
 
     /**
      * Get description page
+     *
      * @param $movieId
      * @return \Illuminate\Http\JsonResponse
      */
@@ -187,7 +188,6 @@ class MovieController extends Controller
      *
      * @param string $cache_key Unique key for cache
      * @param integer $page Page to parse
-     * @param string $base_url base url
      * @return mixed response
      */
     private function getCachedPage($cache_key,$page)
@@ -203,6 +203,11 @@ class MovieController extends Controller
         });
     }
 
+    /**
+     * @param string $cache_key Unique key for cache
+     * @param integer $movieId Page to parse
+     * @return mixed response
+     */
     private function getCachedFullPage($cache_key,$movieId)
     {
         return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($movieId) {
