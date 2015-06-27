@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers\Api\v1\animeland;
 
+use App\Helpers\Parser;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use App\Movie;
 use Cache;
 use GuzzleHttp\Client;
 use Underscore\Types\Arrays;
-use Underscore\Underscore;
 use Yangqi\Htmldom\Htmldom;
+
+use app\Helpers;
 
 class MovieController extends Controller
 {
@@ -43,21 +45,21 @@ class MovieController extends Controller
                 // gerne
                 preg_match("/<b>Жанр<\\/b>(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_genres);
                 $genres = [];
-                list($output_genres, $genres) = $this->get_sublink_text($output_genres, $genres);
+                list($output_genres, $genres) = Parser::getTextFromLinks($output_genres, $genres);
                 //aired
                 preg_match("/<b>Выпуск<\\/b>:(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_aired);
                 // producers
                 preg_match("/<b>Режиссёр<\\/b>(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_producers);
                 $producers = [];
-                list($output_producers, $producers) = $this->get_sublink_text($output_producers, $producers);
+                list($output_producers, $producers) = Parser::getTextFromLinks($output_producers, $producers);
                 // author
                 preg_match("/<b>Автор оригинала<\\/b>(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_author);
                 $authors = [];
-                list($output_author, $authors) = $this->get_sublink_text($output_author, $authors);
+                list($output_author, $authors) = Parser::getTextFromLinks($output_author, $authors);
                 // scenarist
                 preg_match("/<b>Сценарий<\\/b>(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_scenarist);
                 $scenarist = [];
-                list($output_scenarist, $scenarist) = $this->get_sublink_text($output_scenarist, $scenarist);
+                list($output_scenarist, $scenarist) = Parser::getTextFromLinks($output_scenarist, $scenarist);
                 //postscoring
                 preg_match("/<b>Озвучка<\\/b>:\\s([a-zA-Zа-яА-Я].+)\\s/iU", $element->find('.maincont td',1)->innertext, $output_postscoring);
                 //online
@@ -152,10 +154,10 @@ class MovieController extends Controller
             $link = $output_file[1];
 
             $file_item = array(
-                'service'=>$this->getVideoService($link),
+                'service'=> Parser::getVideoService($link),
                 'part'  =>$part,
                 'original_link'=>$link,
-                'download_link'=>$this->createDownloadLink($link)
+                'download_link'=> Parser::createDownloadLink($link)
             );
             array_push($files,$file_item);
         }
@@ -166,7 +168,8 @@ class MovieController extends Controller
         $movie = Movie::firstOrCreate(['movie_id' => $movieId]);
 
         $movie->description = trim(nl2br($description));
-        $info = $movie->info;
+
+        $info = is_object($movie->info)?$movie->info:new \stdClass();
         $info->screenshots = $screenshots;
         $info->files = $grouped_files;
         $movie->info = $info;
@@ -181,85 +184,6 @@ class MovieController extends Controller
         ), 200);
     }
 
-    /**
-     * Create download link from video service
-     *
-     * @param string $original_link Url to video service
-     * @return mixed download url
-     */
-    private function createDownloadLink($original_link){
-        $download_link = '';
-        switch($this->getVideoService($original_link)){
-            case '24video':
-                //get url
-                $parts = explode('/',$original_link);
-                $videoId = array_pop($parts);
-                //get download page
-                $download_link_page = sprintf('http://www.24video.com/video/download2/%d?type=mp4',$videoId);
-                // get file link (1day)
-                $download_link = Cache::remember($download_link_page, env('PAGE_CACHE_MIN'), function () use ($download_link_page) {
-                    $client = new Client();
-                    $response = $client->get($download_link_page);
-                    $html = new Htmldom($response->getBody(true));
-                    $download_link = $html->find('a#link',0)->href;
-                    unset($html);
-                    unset($client);
-                    return $download_link;
-                });
-                break;
-            case 'vk':
-                $download_link = Cache::remember($original_link, env('PAGE_CACHE_MIN'), function () use ($original_link) {
-                    $client = new Client();
-                    $response = $client->get($original_link);
-                    $body = $response->getBody(true);
-                    preg_match("/var vars = ({.*})/i", $body, $output_html);
-                    $jsonArray = json_decode($output_html[1], true);
-                    $download_link = array(
-                        '240'=>isset($jsonArray['url240'])?$jsonArray['url240']:'',
-                        '360'=>isset($jsonArray['url360'])?$jsonArray['url360']:'',
-                        '480'=>isset($jsonArray['url480'])?$jsonArray['url480']:'',
-                        '720'=>isset($jsonArray['url720'])?$jsonArray['url720']:'',
-                    );
-                    unset($client);
-                    return $download_link;
-                });
-
-                break;
-            case 'sibnet':
-                $download_link = Cache::remember($original_link, env('PAGE_CACHE_MIN'), function () use ($original_link) {
-                    $client = new Client();
-                    $response = $client->get($original_link);
-                    $body = $response->getBody(true);
-                    preg_match("/'file' : '(.*)m3u8',/iU", $body, $output_html);
-                    $download_link = 'http://video.sibnet.ru'.$output_html[1].'mp4';
-                    unset($client);
-                    return $download_link;
-                });
-
-                break;
-        }
-        return $download_link;
-    }
-
-    /**
-     * Get video service name from url
-     *
-     * @param string $original_link Url
-     * @return mixed service name
-     */
-    private function getVideoService($original_link)
-    {
-        $service_name = '';
-        if(strrpos($original_link, "24video")){
-            $service_name = '24video';
-        }else if(strrpos($original_link, "vk.com") || strrpos($original_link, "vkontakte.ru")){
-            $service_name = 'vk';
-        }else if(strrpos($original_link, "sibnet")){
-            $service_name = 'sibnet';
-        }
-
-        return $service_name;
-    }
 
     /**
      * Get cached page/*
@@ -293,27 +217,6 @@ class MovieController extends Controller
             unset($client);
             return $responseUtf8;
         });
-    }
-
-    /**
-     * Get sublink from descriptions
-     *
-     * @param array $output_array html parsed object
-     * @param array $result empty array for model
-     * @return array result array
-     */
-    private function get_sublink_text($output_array, $result)
-    {
-        if (isset($output_array[1])) {
-            $result_html = new Htmldom($output_array[1]);
-            foreach ($result_html->find('a') as $item) {
-                $result[] = $item->plaintext;
-            }
-            $result_html->clear();
-            unset($result_html);
-            return array($output_array, $result);
-        }
-        return array($output_array, $result);
     }
 
 
