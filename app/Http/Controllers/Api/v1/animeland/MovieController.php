@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1\animeland;
 
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
+use App\Movie;
 use Cache;
 use GuzzleHttp\Client;
 use Yangqi\Htmldom\Htmldom;
@@ -77,34 +78,38 @@ class MovieController extends Controller
                     $studio = str_replace('J C','J.C.',$studio); // J.C. studio name fix
                 }
 
+                $movie = Movie::firstOrCreate(['movie_id' => $id]);
+                $movie->fill(array(
+                        'movie_id' => $id,
+                        'title' => $title,
+                        'description'=>'',
+                        'service'=>'animeland',
+                        'info'=>array(
+                            'published_at' => $date,
+                            'comments' => array(
+                                'count' => $comment_count
+                            ),
+                            'images' => array(
+                                'small' => $image_small,
+                                'original' => $image_original
+                            ),
+                            'year'=>(isset($output_year[1]))?$output_year[1]:'',
+                            'production'=>(isset($output_production[1]))?trim($output_production[1]):'',
+                            'genres'=> $genres,
+                            'type'=>(isset($output_type[1]))?trim($output_type[1]):'',
+                            'aired'=>(isset($output_aired[1]))?trim($output_aired[1]):'',
+                            'producers'=>$producers,
+                            'authors'=>$authors,
+                            'scenarist'=>$scenarist,
+                            'postscoring'=>(isset($output_postscoring[1]))?$output_postscoring[1]:'',
+                            'studio'=>$studio,
+                            'online'=>$online,
+                            'torrent'=>$torrent
+                        )
 
-                $item = [
-                    'id' => $id,
-                    'title' => $title,
-                    'published_at' => $date,
-                    'comments' => [
-                        'count' => $comment_count
-                    ],
-                    'images' => [
-                        'small' => $image_small,
-                        'original' => $image_original
-                    ],
-                    'info'=>[
-                        'year'=>(isset($output_year[1]))?$output_year[1]:'',
-                        'production'=>(isset($output_production[1]))?trim($output_production[1]):'',
-                        'genres'=> $genres,
-                        'type'=>(isset($output_type[1]))?trim($output_type[1]):'',
-                        'aired'=>(isset($output_aired[1]))?trim($output_aired[1]):'',
-                        'producers'=>$producers,
-                        'authors'=>$authors,
-                        'scenarist'=>$scenarist,
-                        'postscoring'=>(isset($output_postscoring[1]))?$output_postscoring[1]:'',
-                        'studio'=>$studio,
-                        'online'=>$online,
-                        'torrent'=>$torrent
-                    ]
-                ];
-                array_push($items, $item);
+                ));
+                $movie->save();
+                array_push($items, $movie);
             }
         }
         $html->clear();
