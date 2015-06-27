@@ -8,7 +8,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use Yangqi\Htmldom\Htmldom;
 
-class Parser {
+class Parser
+{
 
     /**
      * Get video service name from url
@@ -19,16 +20,18 @@ class Parser {
     public static function getVideoService($original_link)
     {
         $service_name = '';
-        if (strrpos($original_link, "24video")) {
+        if (strrpos($original_link, "24video") !== false) {
             $service_name = '24video';
-        } else if (strrpos($original_link, "vk.com") || strrpos($original_link, "vkontakte.ru")) {
+        } else if (strrpos($original_link, "vk.com") !== false || strrpos($original_link, "vkontakte.ru") !== false) {
             $service_name = 'vk';
-        } else if (strrpos($original_link, "sibnet")) {
+        } else if (strrpos($original_link, "sibnet") !== false) {
             $service_name = 'sibnet';
-        } else if (strrpos($original_link, "kivvi.kz") || strrpos($original_link, "kiwi.kz")) {
+        } else if (strrpos($original_link, "kivvi.kz") !== false || strrpos($original_link, "kiwi.kz") !== false) {
             $service_name = 'kivvi';
-        } else if (strrpos($original_link, "myvi.ru")) {
+        } else if (strrpos($original_link, "myvi.ru") !== false) {
             $service_name = 'myvi';
+        } else if (strrpos($original_link, "rutube.ru") !== false) {
+            $service_name = 'rutube';
         }
 
         return $service_name;
@@ -44,14 +47,18 @@ class Parser {
     {
         $download_link = '';
         switch (Parser::getVideoService($original_link)) {
+            case 'myvi':
+            case 'rutube':
+                $download_link = false;
+                break;
             case 'kivvi':
                 $parts = explode('/', $original_link);
                 array_pop($parts);
                 $videoId = array_pop($parts);
                 $client = new Client();
-                $response = $client->post('http://kivvi.kz/services/watch/download',[
+                $response = $client->post('http://kivvi.kz/services/watch/download', [
                     'form_params' => [
-                        'hash'=>$videoId
+                        'hash' => $videoId
                     ]]);
                 $jsonResponse = json_decode($response->getBody(true));
                 $download_link = $jsonResponse->resources->url;
@@ -82,10 +89,10 @@ class Parser {
                     if (isset($output_html[1])) {
                         $jsonArray = json_decode($output_html[1], true);
                         $download_link = array(
-                            '240' => isset($jsonArray['url240']) ? $jsonArray['url240'] : '',
-                            '360' => isset($jsonArray['url360']) ? $jsonArray['url360'] : '',
-                            '480' => isset($jsonArray['url480']) ? $jsonArray['url480'] : '',
-                            '720' => isset($jsonArray['url720']) ? $jsonArray['url720'] : '',
+                            '240' => isset($jsonArray['url240']) ? $jsonArray['url240'] : false,
+                            '360' => isset($jsonArray['url360']) ? $jsonArray['url360'] : false,
+                            '480' => isset($jsonArray['url480']) ? $jsonArray['url480'] : false,
+                            '720' => isset($jsonArray['url720']) ? $jsonArray['url720'] : false
                         );
                     } else {
                         $download_link = false;
@@ -96,16 +103,17 @@ class Parser {
                 });
 
                 break;
+
             case 'sibnet':
                 $download_link = Cache::remember($original_link, env('PAGE_CACHE_MIN'), function () use ($original_link) {
-                    try{
+                    try {
                         $client = new Client();
                         $response = $client->get($original_link);
                         $body = $response->getBody(true);
                         preg_match("/'file' : '(.*)m3u8',/iU", $body, $output_html);
                         $download_link = (isset($output_html[1])) ? 'http://video.sibnet.ru' . $output_html[1] . 'mp4' : false;
-                    }catch(ClientException $e){
-                        if($e->getResponse()->getStatusCode() == 404){
+                    } catch (ClientException $e) {
+                        if ($e->getResponse()->getStatusCode() == 404) {
                             $download_link = false;
                         }
                     }

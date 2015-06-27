@@ -23,7 +23,7 @@ class MovieController extends Controller
      */
     public function page($page = 1)
     {
-        $cachedHtml = $this->getCachedPage('animeland_page_' . $page,$page);
+        $cachedHtml = $this->getCachedPage('animeland_page_' . $page, $page);
 
         $html = new Htmldom($cachedHtml);
         $items = [];
@@ -37,48 +37,48 @@ class MovieController extends Controller
                 $image_original = $element->find('.maincont a[onclick="return hs.expand(this)"]', 0)->href;
 
                 // year
-                preg_match("/\\[<a.*>(\\d+)<\\/a>\\]/", $element->find('.maincont',0)->innertext, $output_year);
+                preg_match("/\\[<a.*>(\\d+)<\\/a>\\]/", $element->find('.maincont', 0)->innertext, $output_year);
                 //production
-                preg_match("/<b>Производство<\\/b>.*<img.*>(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_production);
+                preg_match("/<b>Производство<\\/b>.*<img.*>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_production);
                 //type
-                preg_match("/<b>Тип<\\/b>:(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_type);
+                preg_match("/<b>Тип<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_type);
                 // gerne
-                preg_match("/<b>Жанр<\\/b>(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_genres);
+                preg_match("/<b>Жанр<\\/b>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_genres);
                 $genres = [];
                 list($output_genres, $genres) = Parser::getTextFromLinks($output_genres, $genres);
                 //aired
-                preg_match("/<b>Выпуск<\\/b>:(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_aired);
+                preg_match("/<b>Выпуск<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_aired);
                 // producers
-                preg_match("/<b>Режиссёр<\\/b>(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_producers);
+                preg_match("/<b>Режиссёр<\\/b>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_producers);
                 $producers = [];
                 list($output_producers, $producers) = Parser::getTextFromLinks($output_producers, $producers);
                 // author
-                preg_match("/<b>Автор оригинала<\\/b>(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_author);
+                preg_match("/<b>Автор оригинала<\\/b>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_author);
                 $authors = [];
                 list($output_author, $authors) = Parser::getTextFromLinks($output_author, $authors);
                 // scenarist
-                preg_match("/<b>Сценарий<\\/b>(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_scenarist);
+                preg_match("/<b>Сценарий<\\/b>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_scenarist);
                 $scenarist = [];
                 list($output_scenarist, $scenarist) = Parser::getTextFromLinks($output_scenarist, $scenarist);
                 //postscoring
-                preg_match("/<b>Озвучка<\\/b>:\\s([a-zA-Zа-яА-Я].+)\\s/iU", $element->find('.maincont td',1)->innertext, $output_postscoring);
+                preg_match("/<b>Озвучка<\\/b>:\\s([a-zA-Zа-яА-Я].+)\\s/iU", $element->find('.maincont td', 1)->innertext, $output_postscoring);
                 //online
-                preg_match("/<b>Онлайн<\\/b>:(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_online);
-                $online = (isset($output_online[1]) && trim($output_online[1]) == 'да')?true:false;
+                preg_match("/<b>Онлайн<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_online);
+                $online = (isset($output_online[1]) && trim($output_online[1]) == 'да') ? true : false;
 
                 //torrent
-                preg_match("/<b>Трекер<\\/b>.*&nbsp;(.*)&nbsp;/iU", $element->find('.maincont td',1)->innertext, $output_torrent);
-                $torrent = (isset($output_torrent[1]) && trim($output_torrent[1]) == 'да')?true:false;
+                preg_match("/<b>Трекер<\\/b>.*&nbsp;(.*)&nbsp;/iU", $element->find('.maincont td', 1)->innertext, $output_torrent);
+                $torrent = (isset($output_torrent[1]) && trim($output_torrent[1]) == 'да') ? true : false;
 
-                preg_match("/<b>Студия<\\/b>:(.*)<br/iU", $element->find('.maincont td',1)->innertext, $output_studio);
+                preg_match("/<b>Студия<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_studio);
                 $studio = '';
-                if(isset($output_studio[1])){
+                if (isset($output_studio[1])) {
                     $result_html = new Htmldom($output_studio[1]);
-                    $studio_array = explode('/',$result_html->find('a',0)->href);
+                    $studio_array = explode('/', $result_html->find('a', 0)->href);
                     array_pop($studio_array); // empty item
-                    $studio = str_replace('+',' ',array_pop($studio_array));
-                    $studio = str_replace('A 1','A-1',$studio); // A-1 studio name fix
-                    $studio = str_replace('J C','J.C.',$studio); // J.C. studio name fix
+                    $studio = str_replace('+', ' ', array_pop($studio_array));
+                    $studio = str_replace('A 1', 'A-1', $studio); // A-1 studio name fix
+                    $studio = str_replace('J C', 'J.C.', $studio); // J.C. studio name fix
                 }
 
                 $movie = Movie::firstOrCreate(['movie_id' => $id]);
@@ -107,7 +107,7 @@ class MovieController extends Controller
                     'online' => $online,
                     'torrent' => $torrent
                 );
-                $movie->info = array_merge((array)$movie->info,$info);
+                $movie->info = array_merge((array)$movie->info, $info);
                 $movie->save();
                 array_push($items, $movie);
             }
@@ -128,37 +128,38 @@ class MovieController extends Controller
      * @param $movieId
      * @return \Illuminate\Http\JsonResponse
      */
-    public function show($movieId){
+    public function show($movieId)
+    {
         $cachedHtml = $this->getCachedFullPage('animeland_show_' . $movieId, $movieId);
         $html = new Htmldom($cachedHtml);
         //description
-        $description = $html->find('.fullstory .maincont div[style="text-align: justify;"]',0)->plaintext;
-        $description = str_replace('Описание:','',$description);
-        $description = str_replace('Справка','',$description);
+        $description = $html->find('.fullstory .maincont div[style="text-align: justify;"]', 0)->plaintext;
+        $description = str_replace('Описание:', '', $description);
+        $description = str_replace('Справка', '', $description);
         //screenshots
         $screenshots = array();
-        foreach($html->find('.fullstory .maincont div[align="center"] a[onclick="return hs.expand(this)"]') as $screen){
+        foreach ($html->find('.fullstory .maincont div[align="center"] a[onclick="return hs.expand(this)"]') as $screen) {
             $screen_item = array(
-                'thumbnail' =>env('BASE_URL_ANIMELAND') .$screen->find('img',0)->src,
+                'thumbnail' => env('BASE_URL_ANIMELAND') . $screen->find('img', 0)->src,
                 'original' => $screen->href
             );
-            array_push($screenshots,$screen_item);
+            array_push($screenshots, $screen_item);
         }
         $files = array();
-        foreach($html->find('.fullstory div.maincont a[href*=aniplay]') as $file){
+        foreach ($html->find('.fullstory div.maincont a[href*=aniplay]') as $file) {
             preg_match("/javascript:aniplay\\('(.*)','link(\\d+)'\\)/iU", $file->href, $output_file);
             $part = $output_file[2];
             $link = $output_file[1];
 
             $file_item = array(
-                'service'=> Parser::getVideoService($link),
-                'part'  =>$part,
-                'original_link'=>$link,
-                'download_link'=> Parser::createDownloadLink($link)
+                'service' => Parser::getVideoService($link),
+                'part' => $part,
+                'original_link' => $link,
+                'download_link' => Parser::createDownloadLink($link)
             );
-            array_push($files,$file_item);
+            array_push($files, $file_item);
         }
-        $grouped_files = Arrays::group($files,function($value){
+        $grouped_files = Arrays::group($files, function ($value) {
             return $value['part'];
         });
 
@@ -167,7 +168,7 @@ class MovieController extends Controller
         $movie->title = trim($html->find('h1.heading #news-title', 0)->plaintext);
         $movie->description = trim(nl2br($description));
 
-        $info = is_object($movie->info)?$movie->info:new \stdClass();
+        $info = is_object($movie->info) ? $movie->info : new \stdClass();
         $info->screenshots = $screenshots;
         $info->files = $grouped_files;
         $movie->info = $info;
@@ -190,7 +191,7 @@ class MovieController extends Controller
      * @param integer $page Page to parse
      * @return mixed response
      */
-    private function getCachedPage($cache_key,$page)
+    private function getCachedPage($cache_key, $page)
     {
         return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page) {
             $client = new Client(array(
@@ -208,7 +209,7 @@ class MovieController extends Controller
      * @param integer $movieId Page to parse
      * @return mixed response
      */
-    private function getCachedFullPage($cache_key,$movieId)
+    private function getCachedFullPage($cache_key, $movieId)
     {
         return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($movieId) {
             $client = new Client(array(
