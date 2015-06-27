@@ -19,6 +19,7 @@ Route::group(array('prefix' => 'api/v1'), function()
 {
     Route::group(array('prefix' => 'animeland'), function()
     {
-        Route::get('list/{page?}', 'Api\v1\animeland\MovieController@page');
+        Route::get('page/{page?}', 'Api\v1\animeland\MovieController@page');
+        Route::get('show/{movieId}', 'Api\v1\animeland\MovieController@show');
     });
 });

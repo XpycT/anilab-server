@@ -12,7 +12,8 @@
     "laravel/framework": "5.1.*",
     "barryvdh/laravel-httpcache": "0.2.x@dev",
     "guzzlehttp/guzzle": "^6.0@dev",
-    "yangqi/htmldom": "dev-master"
+    "yangqi/htmldom": "dev-master",
+    "anahkiasen/underscore-php": "dev-master"
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",

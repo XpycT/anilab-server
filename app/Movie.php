@@ -11,6 +11,6 @@ class Movie extends Model
     protected $hidden = ['service'];
 
     protected $casts = [
-        'info' => 'array',
+        'info' => 'object',
     ];
 }
