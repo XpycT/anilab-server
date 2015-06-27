@@ -82,36 +82,32 @@ class MovieController extends Controller
                 }
 
                 $movie = Movie::firstOrCreate(['movie_id' => $id]);
-                $attributes = array(
-                    'movie_id' => $id,
-                    'title' => $title,
-                    'service' => 'animeland',
-                    'info' => array(
-                        'published_at' => $date,
-                        'comments' => array(
-                            'count' => $comment_count
-                        ),
-                        'images' => array(
-                            'thumbnail' => $image_small,
-                            'original' => $image_original
-                        ),
-                        'year' => (isset($output_year[1])) ? $output_year[1] : '',
-                        'production' => (isset($output_production[1])) ? trim($output_production[1]) : '',
-                        'genres' => $genres,
-                        'type' => (isset($output_type[1])) ? trim($output_type[1]) : '',
-                        'aired' => (isset($output_aired[1])) ? trim($output_aired[1]) : '',
-                        'producers' => $producers,
-                        'authors' => $authors,
-                        'scenarist' => $scenarist,
-                        'postscoring' => (isset($output_postscoring[1])) ? $output_postscoring[1] : '',
-                        'studio' => $studio,
-                        'online' => $online,
-                        'torrent' => $torrent
-                    )
-
+                $movie->movie_id = $id;
+                $movie->title = $title;
+                $movie->service = 'animeland';
+                $info = array(
+                    'published_at' => $date,
+                    'comments' => array(
+                        'count' => $comment_count
+                    ),
+                    'images' => array(
+                        'thumbnail' => $image_small,
+                        'original' => $image_original
+                    ),
+                    'year' => (isset($output_year[1])) ? $output_year[1] : '',
+                    'production' => (isset($output_production[1])) ? trim($output_production[1]) : '',
+                    'genres' => $genres,
+                    'type' => (isset($output_type[1])) ? trim($output_type[1]) : '',
+                    'aired' => (isset($output_aired[1])) ? trim($output_aired[1]) : '',
+                    'producers' => $producers,
+                    'authors' => $authors,
+                    'scenarist' => $scenarist,
+                    'postscoring' => (isset($output_postscoring[1])) ? $output_postscoring[1] : '',
+                    'studio' => $studio,
+                    'online' => $online,
+                    'torrent' => $torrent
                 );
-                $mergeAttributes = $movie->attributesToArray()+$attributes;
-                $movie->fill($mergeAttributes);
+                $movie->info = array_merge((array)$movie->info,$info);
                 $movie->save();
                 array_push($items, $movie);
             }
@@ -167,6 +163,7 @@ class MovieController extends Controller
 
         $movie = Movie::firstOrCreate(['movie_id' => $movieId]);
 
+        $movie->title = trim($html->find('h1.heading #news-title', 0)->plaintext);
         $movie->description = trim(nl2br($description));
 
         $info = is_object($movie->info)?$movie->info:new \stdClass();
@@ -208,7 +205,7 @@ class MovieController extends Controller
 
     private function getCachedFullPage($cache_key,$movieId)
     {
-        return Cache::remember($cache_key, 0/*env('PAGE_CACHE_MIN')*/, function () use ($movieId) {
+        return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($movieId) {
             $client = new Client(array(
                 'base_uri' => env('BASE_URL_ANIMELAND')
             ));
