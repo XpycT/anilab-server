@@ -25,10 +25,10 @@ class MovieController extends Controller
      */
     public function page($page = 1)
     {
-        $path=Request::input('path');
-        $key = isset($path)?'animeland_'.str_replace('/','_',$path).'_page_' . $page:'animeland_page_' . $page;
+        $path = Request::input('path');
+        $key = isset($path) ? 'animeland_' . str_replace('/', '_', $path) . '_page_' . $page : 'animeland_page_' . $page;
         //dd($key);
-        $cachedHtml = $this->getCachedPage($key, $page,$path);
+        $cachedHtml = $this->getCachedPage($key, $page, $path);
         $html = new Htmldom($cachedHtml);
         $items = [];
         foreach ($html->find('#dle-content .base') as $element) {
@@ -91,9 +91,6 @@ class MovieController extends Controller
                 $movie->service = 'animeland';
                 $info = array(
                     'published_at' => $date,
-                    'comments' => array(
-                        'count' => $comment_count
-                    ),
                     'images' => array(
                         'thumbnail' => $image_small,
                         'original' => $image_original
@@ -112,6 +109,7 @@ class MovieController extends Controller
                     'torrent' => $torrent
                 );
                 $movie->info = array_merge((array)$movie->info, $info);
+                $movie->info->comments->count = $comment_count;
                 $movie->save();
                 array_push($items, $movie);
             }
@@ -187,6 +185,65 @@ class MovieController extends Controller
         ), 200);
     }
 
+    public function comments($movieId)
+    {
+        $comments = array();
+
+        $cachedHtml = $this->getCachedFullPage('animeland_show_' . $movieId, $movieId);
+        $html = new Htmldom($cachedHtml);
+        // create comment url
+        $latest_page = ($html->find('.basenavi .navigation a', -1) !== null) ? $html->find('.basenavi .navigation a', -1)->innertext : null;
+        //clear html
+        $html->clear();
+        unset($html);
+
+        //fetch all comments pages
+        $n = $latest_page ? $latest_page : 1;
+        for ($i = 1; $i <= $n; $i++) {
+            $url = sprintf('http://animeland.su/engine/ajax/comments.php?cstart=%d&news_id=%d&skin=AnimeLand', $i, $movieId);
+
+            $response_json = Cache::remember(md5($url), env('PAGE_CACHE_MIN'), function () use ($url) {
+                $client = new Client();
+                $response = $client->get($url);
+                $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
+                $response_json = json_decode($responseUtf8, true);
+                return $response_json;
+            });
+            //parse comment page
+            $html = new Htmldom($response_json['comments']);
+            foreach ($html->find('div[id^=comment-id]') as $comment_item) {
+                $tmpId = explode('-', $comment_item->id);
+                $commentId = array_pop($tmpId);
+
+                $body = $comment_item->find('div[id^=comm-id]', 0)->innertext;
+                $body_text = $comment_item->find('div[id^=comm-id]', 0)->plaintext;
+                $comment = array(
+                    'comment_id' => $commentId,
+                    'date' => $comment_item->find('.comhead ul>li.first', 0)->plaintext,
+                    'auhor' => $comment_item->find('h3 a', 0)->plaintext,
+                    'body' => [
+                        'plain' => $body_text,
+                        'html' => $body
+                    ],
+                    'avatar' => $comment_item->find(".avatarbox > img", 0)->src
+                );
+                array_push($comments, $comment);
+            }
+        }
+
+        //get movie from db
+        $movie = Movie::firstOrCreate(['movie_id' => $movieId]);
+        $info = is_object($movie->info) ? $movie->info : new \stdClass();
+        $info->comments->list = $comments;
+        $movie->info = $info;
+        $movie->save();
+
+        return response()->json(array(
+            'status' => 'success',
+            'item' => $movie,
+        ), 200);
+    }
+
 
     /**
      * Get cached page/*
@@ -195,10 +252,10 @@ class MovieController extends Controller
      * @param integer $page Page to parse
      * @return mixed response
      */
-    private function getCachedPage($cache_key, $page,$path)
+    private function getCachedPage($cache_key, $page, $path)
     {
-        return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page,$path) {
-            $url = isset($path)?$path.'page/' . $page:'/page/' . $page;
+        return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page, $path) {
+            $url = isset($path) ? $path . 'page/' . $page : '/page/' . $page;
             $client = new Client(array(
                 'base_uri' => env('BASE_URL_ANIMELAND')
             ));
