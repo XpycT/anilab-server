@@ -19,9 +19,7 @@ Route::group(array('prefix' => 'api/v1'), function()
 {
     Route::group(array('prefix' => 'animeland'), function()
     {
-        //Route::get('{category}/{subcategory}/page/{page?}', 'Api\v1\animeland\MovieController@page')->where('page', '[0-9]+');
-        //Route::get('{category}/page/{page?}', 'Api\v1\animeland\MovieController@page')->where('page', '[0-9]+');
-        Route::get('page/{page?}', 'Api\v1\animeland\MovieController@page')->where('page', '[0-9]+');
+        Route::match(['get', 'post'],'page/{page?}', 'Api\v1\animeland\MovieController@page')->where('page', '[0-9]+');
         Route::get('show/{movieId}', 'Api\v1\animeland\MovieController@show')->where('movieId', '[0-9]+');
     });
 });

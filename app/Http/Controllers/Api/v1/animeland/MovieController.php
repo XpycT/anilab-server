@@ -7,7 +7,9 @@ use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use App\Movie;
 use Cache;
+use Carbon\Carbon;
 use GuzzleHttp\Client;
+use Request;
 use Underscore\Types\Arrays;
 use Yangqi\Htmldom\Htmldom;
 
@@ -23,8 +25,10 @@ class MovieController extends Controller
      */
     public function page($page = 1)
     {
-        $cachedHtml = $this->getCachedPage('animeland_page_' . $page, $page);
-
+        $path=Request::input('path');
+        $key = isset($path)?'animeland_'.str_replace('/','_',$path).'_page_' . $page:'animeland_page_' . $page;
+        //dd($key);
+        $cachedHtml = $this->getCachedPage($key, $page,$path);
         $html = new Htmldom($cachedHtml);
         $items = [];
         foreach ($html->find('#dle-content .base') as $element) {
@@ -191,13 +195,14 @@ class MovieController extends Controller
      * @param integer $page Page to parse
      * @return mixed response
      */
-    private function getCachedPage($cache_key, $page)
+    private function getCachedPage($cache_key, $page,$path)
     {
-        return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page) {
+        return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page,$path) {
+            $url = isset($path)?$path.'page/' . $page:'/page/' . $page;
             $client = new Client(array(
                 'base_uri' => env('BASE_URL_ANIMELAND')
             ));
-            $response = $client->get('/page/' . $page);
+            $response = $client->get($url);
             $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
             unset($client);
             return $responseUtf8;
