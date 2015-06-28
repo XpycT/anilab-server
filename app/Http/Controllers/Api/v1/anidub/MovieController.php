@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\animeland;
+namespace App\Http\Controllers\Api\v1\anidub;
 
 use App\Helpers\Parser;
 use App\Http\Requests;
@@ -9,6 +9,7 @@ use App\Movie;
 use Cache;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
+use Log;
 use Request;
 use Underscore\Types\Arrays;
 use Yangqi\Htmldom\Htmldom;
@@ -27,87 +28,77 @@ class MovieController extends Controller
     {
         // generate key
         $path = Request::input('path');
-        $key = isset($path) ? 'animeland_' . str_replace('/', '_', $path) . '_page_' . $page : 'animeland_page_' . $page;
+        $key = isset($path) ? 'anidub_' . str_replace('/', '_', $path) . '_page_' . $page : 'anidub_page_' . $page;
         // get page or cache
+//        dd($key);
         $cachedHtml = $this->getCachedPage($key, $page, $path);
         $html = new Htmldom($cachedHtml);
         // parse html
         $items = [];
-        foreach ($html->find('#dle-content .base') as $element) {
-            if ($element->find('.bheading', 0)) {
-                $id = mb_split('-', $element->find('.ratebox > div', 0)->id)[2];
-                $title = $element->find('h1.heading a', 0)->plaintext;
-                $date = $element->find('.headinginfo .date a', 0)->plaintext;
-                $comment_count = $element->find('.bmid .bmore .arg a', 0)->plaintext;
-                $image_small = env('BASE_URL_ANIMELAND') . $element->find('.maincont a[onclick="return hs.expand(this)"] img', 0)->src;
-                $image_original = $element->find('.maincont a[onclick="return hs.expand(this)"]', 0)->href;
+        foreach ($html->find('#dle-content .news_short') as $element) {
+            if ($element->find('.maincont ul li span a', 0)) {
+                $id = mb_split('-', $element->find('div[id^=news-id]', 0)->id)[2];
+                $data_original = 'data-original';
+                $title = $element->find('.poster_img img', 0)->alt;
+                $date = '';//$element->find('.headinginfo .date a', 0)->plaintext;
+                $comment_count = trim(mb_split(':', $element->find('.newsfoot li a', 0)->plaintext)[1]);
+                $image_small = $element->find('.poster_img img', 0)->$data_original;
+                $image_original = $element->find('.poster_img img', 0)->$data_original;
+
+                $description = $element->find('div[id^=news-id]', 0)->plaintext;
 
                 // year
-                preg_match("/\\[<a.*>(\\d+)<\\/a>\\]/", $element->find('.maincont', 0)->innertext, $output_year);
+                $year = $element->find('.maincont ul li span a', 0)->plaintext;
                 //production
-                preg_match("/<b>Производство<\\/b>.*<img.*>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_production);
-                //type
-                preg_match("/<b>Тип<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_type);
+                preg_match("/<b>Страна: <\\/b><span>(.*)<\\/span>/iU", $element->find('.maincont ul', 0)->innertext, $output_production);
+                // series count
+                preg_match("/<b>Количество серий: <\\/b><span>(.*)<\\/span>/iU", $element->find('.maincont ul', 0)->innertext, $output_series);
                 // gerne
-                preg_match("/<b>Жанр<\\/b>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_genres);
                 $genres = [];
-                list($output_genres, $genres) = Parser::getTextFromLinks($output_genres, $genres);
-                //aired
-                preg_match("/<b>Выпуск<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_aired);
-                // producers
-                preg_match("/<b>Режиссёр<\\/b>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_producers);
-                $producers = [];
-                list($output_producers, $producers) = Parser::getTextFromLinks($output_producers, $producers);
-                // author
-                preg_match("/<b>Автор оригинала<\\/b>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_author);
-                $authors = [];
-                list($output_author, $authors) = Parser::getTextFromLinks($output_author, $authors);
-                // scenarist
-                preg_match("/<b>Сценарий<\\/b>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_scenarist);
-                $scenarist = [];
-                list($output_scenarist, $scenarist) = Parser::getTextFromLinks($output_scenarist, $scenarist);
-                //postscoring
-                preg_match("/<b>Озвучка<\\/b>:\\s([a-zA-Zа-яА-Я].+)\\s/iU", $element->find('.maincont td', 1)->innertext, $output_postscoring);
-                //online
-                preg_match("/<b>Онлайн<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_online);
-                $online = (isset($output_online[1]) && trim($output_online[1]) == 'да') ? true : false;
-                //torrent
-                preg_match("/<b>Трекер<\\/b>.*&nbsp;(.*)&nbsp;/iU", $element->find('.maincont td', 1)->innertext, $output_torrent);
-                $torrent = (isset($output_torrent[1]) && trim($output_torrent[1]) == 'да') ? true : false;
-                // studio
-                preg_match("/<b>Студия<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_studio);
-                $studio = '';
-                if (isset($output_studio[1])) {
-                    $result_html = new Htmldom($output_studio[1]);
-                    $studio_array = explode('/', $result_html->find('a', 0)->href);
-                    array_pop($studio_array); // empty item
-                    $studio = str_replace('+', ' ', array_pop($studio_array));
-                    $studio = str_replace('A 1', 'A-1', $studio); // A-1 studio name fix
-                    $studio = str_replace('J C', 'J.C.', $studio); // J.C. studio name fix
+                foreach ($element->find('span[itemprop="genre"] a') as $item) {
+                    $genres[] = $item->plaintext;
                 }
+                //aired
+                preg_match("/<b>Дата выпуска: <\\/b><span>(.*)<\\/span>/iU", $element->find('.maincont ul', 0)->innertext, $output_aired);
+                // producers
+                preg_match("/<b>Режиссёр<\\/b>(.*)<br/iU", $element->find('.maincont ul', 0)->innertext, $output_producers);
+                $producers = [];
+                foreach ($element->find('li[itemprop="director"] span a') as $item) {
+                    $producers[] = $item->plaintext;
+                }
+                // author
+                $authors = [];
+                foreach ($element->find('li[itemprop="author"] span a') as $item) {
+                    $authors[] = $item->plaintext;
+                }
+                //postscoring
+                preg_match("/<b>Озвучивание: <\\/b><span>(.*)<\\/span>/iU", $element->find('.maincont ul', 0)->innertext, $output_postscoring_tmp);
+                preg_match_all("/<a.*>(.*)<\\/a>/iU", $output_postscoring_tmp[1], $output_postscoring);
+                // studio
+                $studio = $element->find('.video_info a img', 0) ? $element->find('.video_info a img', 0)->alt : false;
                 // get movie from db
                 $movie = Movie::firstOrCreate(['movie_id' => $id]);
                 $movie->movie_id = $id;
+                $movie->description = $description;
                 $movie->title = $title;
-                $movie->service = 'animeland';
+                $movie->service = 'anidub';
                 $info = array(
                     'published_at' => $date,
                     'images' => array(
                         'thumbnail' => $image_small,
                         'original' => $image_original
                     ),
-                    'year' => (isset($output_year[1])) ? $output_year[1] : '',
+                    'year' => $year,
                     'production' => (isset($output_production[1])) ? trim($output_production[1]) : '',
                     'genres' => $genres,
-                    'type' => (isset($output_type[1])) ? trim($output_type[1]) : '',
+                    'series' => (isset($output_series[1])) ? trim($output_series[1]) : '',
                     'aired' => (isset($output_aired[1])) ? trim($output_aired[1]) : '',
                     'producers' => $producers,
                     'authors' => $authors,
-                    'scenarist' => $scenarist,
                     'postscoring' => (isset($output_postscoring[1])) ? $output_postscoring[1] : '',
                     'studio' => $studio,
-                    'online' => $online,
-                    'torrent' => $torrent
+                    'online' => true,
+                    'torrent' => false
                 );
                 $info['comments']['count'] = $comment_count;
                 // merge infos
@@ -135,27 +126,35 @@ class MovieController extends Controller
     public function show($movieId)
     {
         // get page from cache
-        $cachedHtml = $this->getCachedFullPage('animeland_show_' . $movieId, $movieId);
+        $cachedHtml = $this->getCachedFullPage('anidub_show_' . $movieId, $movieId);
         $html = new Htmldom($cachedHtml);
         //description
-        $description = $html->find('.fullstory .maincont div[style="text-align: justify;"]', 0)->plaintext;
+        $html->find('div[itemprop="description"] div[id^="news-id-"]', 0)->outertext = '';
+        $html->find('div[itemprop="description"] div[id^="news-id-"]', 0)->innertext = '';
+        $html->save();
+        $description = $html->find('div[itemprop="description"]', 0)->plaintext;
         $description = str_replace('Описание:', '', $description);
         $description = str_replace('Справка', '', $description);
+
         //screenshots
         $screenshots = array();
-        foreach ($html->find('.fullstory .maincont div[align="center"] a[onclick="return hs.expand(this)"]') as $screen) {
+        foreach ($html->find('.screens a[onclick="return hs.expand(this)"]') as $screen) {
             $screen_item = array(
-                'thumbnail' => env('BASE_URL_ANIMELAND') . $screen->find('img', 0)->src,
+                'thumbnail' => $screen->find('img', 0)->src,
                 'original' => $screen->href
             );
             array_push($screenshots, $screen_item);
         }
         //files
         $files = array();
-        foreach ($html->find('.fullstory div.maincont a[href*=aniplay]') as $file) {
-            preg_match("/javascript:aniplay\\('(.*)','link(\\d+)'\\)/iU", $file->href, $output_file);
-            $part = $output_file[2];
-            $link = $output_file[1];
+        foreach ($html->find('select[id^=sel] option') as $file) {
+
+            $part = $file->plaintext;
+            $link = $file->value;
+            //fix vk link
+            $link = explode('|', $link)[0];
+            $link = str_replace('pp.anidub-online.ru/video_ext.php', 'vk.com/video_ext.php', $link);
+
 
             $file_item = array(
                 'service' => Parser::getVideoService($link),
@@ -171,7 +170,7 @@ class MovieController extends Controller
 
         //load movie from db
         $movie = Movie::firstOrCreate(['movie_id' => $movieId]);
-        $movie->title = trim($html->find('h1.heading #news-title', 0)->plaintext);
+        $movie->title = trim($html->find('h1.titlfull', 0)->plaintext);
         $movie->description = trim(nl2br($description));
 
         $info = is_object($movie->info) ? $movie->info : new \stdClass();
@@ -193,23 +192,24 @@ class MovieController extends Controller
     {
         $comments = array();
 
-        $cachedHtml = $this->getCachedFullPage('animeland_show_' . $movieId, $movieId);
+        $cachedHtml = $this->getCachedFullPage('anidub_show_' . $movieId, $movieId);
         $html = new Htmldom($cachedHtml);
         // create comment url
-        $latest_page = ($html->find('.basenavi .navigation a', -1) !== null) ? $html->find('.basenavi .navigation a', -1)->innertext : null;
+        $latest_page = ($html->find('.dle-comments-navigation .navigation a', -1) !== null) ? $html->find('.dle-comments-navigation .navigation a', -1)->innertext : null;
         //clear html
         $html->clear();
         unset($html);
 
         //fetch all comments pages
         $n = $latest_page ? $latest_page : 1;
-        for ($i = 1; $i <= $n; $i++) {
-            $url = sprintf('http://animeland.su/engine/ajax/comments.php?cstart=%d&news_id=%d&skin=AnimeLand', $i, $movieId);
+//        for ($i = 1; $i <= $n; $i++) {
+        for ($i = $n; $i > 0; $i--) {
+            $url = sprintf('http://online.anidub.com/engine/ajax/comments.php?cstart=%d&news_id=%d&skin=Anidub_online', $i, $movieId);
 
             $response_json = Cache::remember(md5($url), env('PAGE_CACHE_MIN'), function () use ($url) {
                 $client = new Client();
                 $response = $client->get($url);
-                $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
+                $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'auto');
                 $response_json = json_decode($responseUtf8, true);
                 return $response_json;
             });
@@ -221,15 +221,16 @@ class MovieController extends Controller
 
                 $body = $comment_item->find('div[id^=comm-id]', 0)->innertext;
                 $body_text = $comment_item->find('div[id^=comm-id]', 0)->plaintext;
+                $body_text = str_replace('&nbsp;Комментарий скрыт в связи с низким рейтингом', '', $body_text);
                 $comment = array(
                     'comment_id' => $commentId,
-                    'date' => $comment_item->find('.comhead ul>li.first', 0)->plaintext,
-                    'auhor' => $comment_item->find('h3 a', 0)->plaintext,
+                    'date' => $comment_item->find('.comm_inf ul>li', 0)->plaintext,
+                    'auhor' => $comment_item->find('.comm_title a', 0)->plaintext,
                     'body' => [
                         'plain' => $body_text,
                         'html' => $body
                     ],
-                    'avatar' => $comment_item->find(".avatarbox > img", 0)->src
+                    'avatar' => $comment_item->find(".commcont center > img", 0)->src
                 );
                 array_push($comments, $comment);
             }
@@ -262,10 +263,10 @@ class MovieController extends Controller
         return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page, $path) {
             $url = isset($path) ? $path . 'page/' . $page . '/' : '/page/' . $page . '/';
             $client = new Client(array(
-                'base_uri' => env('BASE_URL_ANIMELAND')
+                'base_uri' => env('BASE_URL_ANIDUB')
             ));
             $response = $client->get($url);
-            $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
+            $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'auto');
             unset($client);
             return $responseUtf8;
         });
@@ -282,10 +283,10 @@ class MovieController extends Controller
     {
         return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($movieId) {
             $client = new Client(array(
-                'base_uri' => env('BASE_URL_ANIMELAND')
+                'base_uri' => env('BASE_URL_ANIDUB')
             ));
             $response = $client->get('/index.php?newsid=' . $movieId);
-            $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
+            $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'auto');
             unset($client);
             return $responseUtf8;
         });

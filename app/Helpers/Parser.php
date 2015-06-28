@@ -32,6 +32,10 @@ class Parser
             $service_name = 'myvi';
         } else if (strrpos($original_link, "rutube.ru") !== false) {
             $service_name = 'rutube';
+        } else if (strrpos($original_link, "moonwalk.cc") !== false) {
+            $service_name = 'moonwalk';
+        } else if (strrpos($original_link, "player.adcdn.tv") !== false) {
+            $service_name = 'anidub';
         }
 
         return $service_name;
@@ -50,6 +54,53 @@ class Parser
             case 'myvi':
             case 'rutube':
                 $download_link = false;
+                break;
+            case 'anidub':
+                $download_link = Cache::remember(md5($original_link), env('PAGE_CACHE_MIN'), function () use ($original_link) {
+                    $client = new Client();
+                    //get page with player
+                    $response = $client->get($original_link);
+                    $html = new Htmldom($response->getBody(true));
+                    preg_match("/file: '(.*.m3u8)',/iU", $html, $m3u8_array);
+                    if (isset($m3u8_array[1])) {
+                        return $m3u8_array[1];
+                    } else {
+                        return false;
+                    }
+                    $html->clear();
+                    unset($html);
+                });
+                break;
+            case 'moonwalk':
+                // fix link
+                $link = explode('|', $original_link)[0];
+                $download_link = str_replace('iframe', 'index.m3u8?cd=1', $link);
+
+                /*$download_link = Cache::remember(md5($link), env('PAGE_CACHE_MIN'), function () use ($link) {
+                    $client = new Client();
+                    //get page with player
+                    $response = $client->get($link);
+                    $html = new Htmldom($response->getBody(true));
+                    preg_match("/video_token: '(.*)'/iU", $html, $token_array);
+                    if (isset($token_array[1])) {
+                        preg_match("/access_key: '(.*)'/iU", $html, $access_array);
+                        if (isset($access_array[1])) {
+                            $response = $client->post('http://moonwalk.cc/sessions/create_session', [
+                                'form_params' => [
+                                    'video_token' => $token_array[1],
+                                    'access_key' => $access_array[1],
+                                    'cd' => 1
+                                ]]);
+                            $jsonResponse = json_decode($response->getBody(true));
+                            return $jsonResponse->manifest_m3u8;
+                        }
+                    }else{
+                        return false;
+                    }
+                    $html->clear();
+                    unset($html);
+                });*/
+
                 break;
             case 'kivvi':
                 $parts = explode('/', $original_link);
