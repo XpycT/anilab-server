@@ -25,11 +25,13 @@ class MovieController extends Controller
      */
     public function page($page = 1)
     {
+        // generate key
         $path = Request::input('path');
         $key = isset($path) ? 'animeland_' . str_replace('/', '_', $path) . '_page_' . $page : 'animeland_page_' . $page;
-        //dd($key);
+        // get page or cache
         $cachedHtml = $this->getCachedPage($key, $page, $path);
         $html = new Htmldom($cachedHtml);
+        // parse html
         $items = [];
         foreach ($html->find('#dle-content .base') as $element) {
             if ($element->find('.bheading', 0)) {
@@ -69,11 +71,10 @@ class MovieController extends Controller
                 //online
                 preg_match("/<b>Онлайн<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_online);
                 $online = (isset($output_online[1]) && trim($output_online[1]) == 'да') ? true : false;
-
                 //torrent
                 preg_match("/<b>Трекер<\\/b>.*&nbsp;(.*)&nbsp;/iU", $element->find('.maincont td', 1)->innertext, $output_torrent);
                 $torrent = (isset($output_torrent[1]) && trim($output_torrent[1]) == 'да') ? true : false;
-
+                // studio
                 preg_match("/<b>Студия<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_studio);
                 $studio = '';
                 if (isset($output_studio[1])) {
@@ -84,7 +85,7 @@ class MovieController extends Controller
                     $studio = str_replace('A 1', 'A-1', $studio); // A-1 studio name fix
                     $studio = str_replace('J C', 'J.C.', $studio); // J.C. studio name fix
                 }
-
+                // get movie from db
                 $movie = Movie::firstOrCreate(['movie_id' => $id]);
                 $movie->movie_id = $id;
                 $movie->title = $title;
@@ -108,6 +109,7 @@ class MovieController extends Controller
                     'online' => $online,
                     'torrent' => $torrent
                 );
+                // merge infos
                 $movie->info = array_merge((array)$movie->info, $info);
                 $movie->info->comments->count = $comment_count;
                 $movie->save();
@@ -132,6 +134,7 @@ class MovieController extends Controller
      */
     public function show($movieId)
     {
+        // get page from cache
         $cachedHtml = $this->getCachedFullPage('animeland_show_' . $movieId, $movieId);
         $html = new Htmldom($cachedHtml);
         //description
@@ -147,6 +150,7 @@ class MovieController extends Controller
             );
             array_push($screenshots, $screen_item);
         }
+        //files
         $files = array();
         foreach ($html->find('.fullstory div.maincont a[href*=aniplay]') as $file) {
             preg_match("/javascript:aniplay\\('(.*)','link(\\d+)'\\)/iU", $file->href, $output_file);
@@ -165,8 +169,8 @@ class MovieController extends Controller
             return $value['part'];
         });
 
+        //load movie from db
         $movie = Movie::firstOrCreate(['movie_id' => $movieId]);
-
         $movie->title = trim($html->find('h1.heading #news-title', 0)->plaintext);
         $movie->description = trim(nl2br($description));
 
@@ -234,6 +238,7 @@ class MovieController extends Controller
         //get movie from db
         $movie = Movie::firstOrCreate(['movie_id' => $movieId]);
         $info = is_object($movie->info) ? $movie->info : new \stdClass();
+        $info->comments = isset($info->comments)?$info->comments: new \stdClass();
         $info->comments->list = $comments;
         $movie->info = $info;
         $movie->save();
@@ -246,7 +251,7 @@ class MovieController extends Controller
 
 
     /**
-     * Get cached page/*
+     * Get cached page
      *
      * @param string $cache_key Unique key for cache
      * @param integer $page Page to parse
@@ -267,6 +272,8 @@ class MovieController extends Controller
     }
 
     /**
+     * Get description page
+     *
      * @param string $cache_key Unique key for cache
      * @param integer $movieId Page to parse
      * @return mixed response
