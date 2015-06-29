@@ -112,7 +112,7 @@ class MovieController extends Controller
 
         return response()->json(array(
             'status' => 'success',
-            'page' => $page,
+            'page' => (int)$page,
             'movies' => $items
         ), 200);
     }

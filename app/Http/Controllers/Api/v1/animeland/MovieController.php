@@ -39,9 +39,14 @@ class MovieController extends Controller
                 $title = $element->find('h1.heading a', 0)->plaintext;
                 $date = $element->find('.headinginfo .date a', 0)->plaintext;
                 $comment_count = $element->find('.bmid .bmore .arg a', 0)->plaintext;
-                $image_small = env('BASE_URL_ANIMELAND') . $element->find('.maincont a[onclick="return hs.expand(this)"] img', 0)->src;
-                $image_original = $element->find('.maincont a[onclick="return hs.expand(this)"]', 0)->href;
 
+                if($element->find('.maincont a[onclick="return hs.expand(this)"]', 0)){
+                    $image_small = env('BASE_URL_ANIMELAND') . $element->find('.maincont a[onclick="return hs.expand(this)"] img', 0)->src;
+                    $image_original = $element->find('.maincont a[onclick="return hs.expand(this)"]', 0)->href;
+                }else{
+                    $image_small = env('BASE_URL_ANIMELAND') . $element->find('.maincont td[valign="top"] img', 0)->src;
+                    $image_original = $image_small;
+                }
                 // year
                 preg_match("/\\[<a.*>(\\d+)<\\/a>\\]/", $element->find('.maincont', 0)->innertext, $output_year);
                 //production
@@ -121,7 +126,7 @@ class MovieController extends Controller
 
         return response()->json(array(
             'status' => 'success',
-            'page' => $page,
+            'page' => (int)$page,
             'movies' => $items
         ), 200);
     }
