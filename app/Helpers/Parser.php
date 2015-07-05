@@ -135,10 +135,12 @@ class Parser
                 $download_link = Cache::remember($original_link, env('PAGE_CACHE_MIN'), function () use ($original_link) {
                     $client = new Client();
                     $response = $client->get($original_link);
-                    $body = $response->getBody(true);
+                    //$body = $response->getBody(true);
+                    $body = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
                     preg_match("/var vars = ({.*})/i", $body, $output_html);
                     if (isset($output_html[1])) {
                         $jsonArray = json_decode($output_html[1], true);
+                       // dd($output_html);
                         $download_link = array(
                             '240' => isset($jsonArray['url240']) ? $jsonArray['url240'] : false,
                             '360' => isset($jsonArray['url360']) ? $jsonArray['url360'] : false,
