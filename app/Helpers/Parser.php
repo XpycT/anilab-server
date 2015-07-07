@@ -132,7 +132,7 @@ class Parser
                 });
                 break;
             case 'vk':
-                $client = new Client();
+                /*$client = new Client();
                 $response = $client->get($original_link);
                 //$body = $response->getBody(true);
                 $body = mb_convert_encoding($response->getBody(true), 'utf-8', 'auto');
@@ -150,7 +150,11 @@ class Parser
                     $download_link = false;
                 }
 
-                unset($client);
+                unset($client);*/
+                $query_string = parse_url($original_link,PHP_URL_QUERY);
+                parse_str($query_string, $get_array);
+
+                $download_link = sprintf('http://vk.com/video.php?act=a_flash_vars&vid=%s_%s',$get_array['oid'],$get_array['id']);
 
                 break;
 
