@@ -10,7 +10,9 @@ use Cache;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Request;
+use Underscore\Parse;
 use Underscore\Types\Arrays;
+use Underscore\Types\Object;
 use Yangqi\Htmldom\Htmldom;
 
 use app\Helpers;
@@ -170,9 +172,10 @@ class MovieController extends Controller
             );
             array_push($files, $file_item);
         }
-        $grouped_files = Arrays::group($files, function ($value) {
+        $grouped_files_ = Arrays::group($files, function ($value) {
             return $value['part'];
         });
+        $grouped_files = Arrays::values($grouped_files_);
 
         //load movie from db
         $movie = Movie::firstOrCreate(['movie_id' => $movieId]);

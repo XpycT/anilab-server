@@ -164,9 +164,10 @@ class MovieController extends Controller
             );
             array_push($files, $file_item);
         }
-        $grouped_files = Arrays::group($files, function ($value) {
+        $grouped_files_ = Arrays::group($files, function ($value) {
             return $value['part'];
         });
+        $grouped_files = Arrays::values($grouped_files_);
 
         //load movie from db
         $movie = Movie::firstOrCreate(['movie_id' => $movieId]);
