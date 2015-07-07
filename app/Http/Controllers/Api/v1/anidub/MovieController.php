@@ -2,19 +2,16 @@
 
 namespace App\Http\Controllers\Api\v1\anidub;
 
+use app\Helpers;
 use App\Helpers\Parser;
-use App\Http\Requests;
 use App\Http\Controllers\Controller;
+use App\Http\Requests;
 use App\Movie;
 use Cache;
-use Carbon\Carbon;
 use GuzzleHttp\Client;
-use Log;
 use Request;
 use Underscore\Types\Arrays;
 use Yangqi\Htmldom\Htmldom;
-
-use app\Helpers;
 
 class MovieController extends Controller
 {
