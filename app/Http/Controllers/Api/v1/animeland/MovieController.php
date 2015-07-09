@@ -86,11 +86,14 @@ class MovieController extends Controller
                 $studio = '';
                 if (isset($output_studio[1])) {
                     $result_html = new Htmldom($output_studio[1]);
-                    $studio_array = explode('/', $result_html->find('a', 0)->href);
-                    array_pop($studio_array); // empty item
-                    $studio = str_replace('+', ' ', array_pop($studio_array));
-                    $studio = str_replace('A 1', 'A-1', $studio); // A-1 studio name fix
-                    $studio = str_replace('J C', 'J.C.', $studio); // J.C. studio name fix
+                    if($result_html->find('a', 0)){
+                        $studio_array = explode('/', $result_html->find('a', 0)->href);
+                        array_pop($studio_array); // empty item
+                        $studio = str_replace('+', ' ', array_pop($studio_array));
+                        $studio = str_replace('A 1', 'A-1', $studio); // A-1 studio name fix
+                        $studio = str_replace('J C', 'J.C.', $studio); // J.C. studio name fix
+                    }
+
                 }
                 // get movie from db
                 $movie = Movie::firstOrCreate(['movie_id' => $id]);
