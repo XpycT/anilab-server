@@ -86,7 +86,7 @@ class MovieController extends Controller
                 $studio = '';
                 if (isset($output_studio[1])) {
                     $result_html = new Htmldom($output_studio[1]);
-                    if($result_html->find('a', 0)){
+                    if($result_html && $result_html->find('a', 0)){
                         $studio_array = explode('/', $result_html->find('a', 0)->href);
                         array_pop($studio_array); // empty item
                         $studio = str_replace('+', ' ', array_pop($studio_array));
