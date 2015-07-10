@@ -43,8 +43,8 @@ class MovieController extends Controller
 
                 //$image_original = $element->find('.poster_img img', 0)->$data_original;
                 preg_match("/data-original=\"(.*)\"/iU", $element->find('.poster_img', 0)->innertext, $output_posters);
-                $data_original = (isset($output_posters[1])) ? $output_posters[1] : '';
-                $image_small = str_replace('/poster/','/poster/small/',$element->find('.poster_img img', 0)->$data_original);
+                $image_original = (isset($output_posters[1])) ? $output_posters[1] : '';
+                $image_small = str_replace('/poster/','/poster/small/',$image_original);
 
                 $description = $element->find('div[id^=news-id]', 0)->plaintext;
 
