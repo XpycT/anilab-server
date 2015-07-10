@@ -137,7 +137,7 @@ class MovieController extends Controller
         $screenshots = array();
         foreach ($html->find('.screens a[onclick="return hs.expand(this)"]') as $screen) {
             $screen_item = array(
-                'thumbnail' => $screen->find('img', 0)->src,
+                'thumbnail' => str_replace('/poster/','/poster/small/',$screen->find('img', 0)->src),
                 'original' => $screen->href
             );
             array_push($screenshots, $screen_item);
