@@ -33,7 +33,8 @@ class MovieController extends Controller
         // parse html
         $items = [];
         foreach ($html->find('#dle-content .news_short') as $element) {
-            if ($element->find('.maincont ul li span a', 0)) {
+            if ($element->find('.maincont ul li span a', 0) &&
+                $element->find('.poster_img img', 0) && strlen($element->find('.poster_img img', 0)->alt)>0) {
                 $id = mb_split('-', $element->find('div[id^=news-id]', 0)->id)[2];
                 $data_original = 'data-original';
                 $title = $element->find('.poster_img img', 0)->alt;
