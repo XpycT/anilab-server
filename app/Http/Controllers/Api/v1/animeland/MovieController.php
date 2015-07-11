@@ -27,11 +27,23 @@ class MovieController extends Controller
     {
         // generate key
         $path = Request::input('path');
-        $key = isset($path) ? 'animeland_' . str_replace('/', '_', $path) . '_page_' . $page : 'animeland_page_' . $page;
+        $search_query = Request::input('q');
+
+        $key= 'animeland_page_' . $page; // ex. animeland_page_1
+        if(isset($path)){
+            $key = 'animeland_' . str_replace('/', '_', $path) . '_page_' . $page; //ex. animeland__anime-rus_tv-rus__page_1
+        }else if(isset($search_query)){
+            $key = 'animeland_' . md5($search_query) . '_page_' . $page; //ex. animeland_34jhg234876sdfsjknk98_page_1
+        }
         $items = [];
         // get page or cache
         try {
-            $cachedHtml = $this->getCachedPage($key, $page, $path);
+            if(isset($search_query)){
+                $cachedHtml = $this->getCachedSearch($key, $page, $search_query);
+            }else{
+                $cachedHtml = $this->getCachedPage($key, $page, $path);
+            }
+
         } catch (ClientException $e) {
             $response = $e->getResponse();
             return response()->json(array(
@@ -45,10 +57,20 @@ class MovieController extends Controller
 
         foreach ($html->find('#dle-content .base') as $element) {
             if ($element->find('.bheading', 0)) {
-                $id = mb_split('-', $element->find('.ratebox > div', 0)->id)[2];
+                // get id from title link
+                //$id = mb_split('-', $element->find('.ratebox > div', 0)->id)[2];
+                $idArray = mb_split('/', $element->find('h1.heading a', 0)->href);
+                $id = mb_split('-',end($idArray))[0];
+
                 $title = $element->find('h1.heading a', 0)->plaintext;
-                $date = $element->find('.headinginfo .date a', 0)->plaintext;
-                $comment_count = $element->find('.bmid .bmore .arg a', 0)->plaintext;
+                $date = ($element->find('.headinginfo .date a', 0))?$element->find('.headinginfo .date a', 0)->plaintext:$element->find('.headinginfo .date b', 0)->plaintext;
+                //comment count
+                if($element->find('.bmid .bmore .arg a', 0)){
+                    $comment_count = $element->find('.bmid .bmore .arg a', 0)->plaintext;
+                }else{
+                    $comment_count = trim(mb_split(':', $element->find('.bmid .bmore .arg', 0)->plaintext)[1]);
+
+                }
 
                 if ($element->find('.maincont a[onclick="return hs.expand(this)"]', 0)) {
                     $image_small = env('BASE_URL_ANIMELAND') . $element->find('.maincont a[onclick="return hs.expand(this)"] img', 0)->src;
@@ -275,6 +297,7 @@ class MovieController extends Controller
      *
      * @param string $cache_key Unique key for cache
      * @param integer $page Page to parse
+     * @param string $path category path
      * @return mixed response
      */
     private function getCachedPage($cache_key, $page, $path)
@@ -285,6 +308,37 @@ class MovieController extends Controller
                 'base_uri' => env('BASE_URL_ANIMELAND')
             ));
             $response = $client->get($url);
+            $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
+            unset($client);
+            return $responseUtf8;
+        });
+    }
+
+    /**
+     * Get cached search
+     *
+     * @param string $cache_key Unique key for cache
+     * @param integer $page Page to parse
+     * @param string $search_query search query
+     * @return mixed response
+     */
+    private function getCachedSearch($cache_key, $page, $search_query)
+    {
+        return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page, $search_query) {
+            $client = new Client(array(
+                'base_uri' => env('BASE_URL_ANIMELAND')
+            ));
+            $result_from = (int)$page*7+1;
+            $response = $client->post("/index.php?do=search",[
+                'form_params' => [
+                    'do' => 'search',
+                    'subaction' => 'search',
+                    'full_search' => 0,
+                    'search_start' => $page,
+                    'result_from' => ($page == 1)?1:$result_from,
+                    'story' => mb_convert_encoding($search_query,'cp1251','utf-8')
+                ]
+            ]);
             $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
             unset($client);
             return $responseUtf8;

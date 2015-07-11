@@ -26,11 +26,22 @@ class MovieController extends Controller
     {
         // generate key
         $path = Request::input('path');
-        $key = isset($path) ? 'anidub_' . str_replace('/', '_', $path) . '_page_' . $page : 'anidub_page_' . $page;
+        $search_query = Request::input('q');
+
+        $key= 'anidub_page_' . $page; // ex. anidub_page_1
+        if(isset($path)){
+            $key = 'anidub_' . str_replace('/', '_', $path) . '_page_' . $page; //ex. anidub__anime-rus_tv-rus__page_1
+        }else if(isset($search_query)){
+            $key = 'anidub_' . md5($search_query) . '_page_' . $page; //ex. anidub_34jhg234876sdfsjknk98_page_1
+        }
         $items = [];
         // get page or cache
         try {
-            $cachedHtml = $this->getCachedPage($key, $page, $path);
+            if(isset($search_query)){
+                $cachedHtml = $this->getCachedSearch($key, $page, $search_query);
+            }else{
+                $cachedHtml = $this->getCachedPage($key, $page, $path);
+            }
         } catch (ClientException $e) {
             $response = $e->getResponse();
             return response()->json(array(
@@ -42,83 +53,90 @@ class MovieController extends Controller
         $html = new Htmldom($cachedHtml);
         // parse html
         foreach ($html->find('#dle-content .news_short') as $element) {
-            if ($element->find('.maincont ul li span a', 0) &&
-                $element->find('.poster_img img', 0) && strlen($element->find('.poster_img img', 0)->alt) > 0
-            ) {
-                $id = mb_split('-', $element->find('div[id^=news-id]', 0)->id)[2];
-                $data_original = 'data-original';
-                $title = $element->find('.poster_img img', 0)->alt;
-                $date = '';//$element->find('.headinginfo .date a', 0)->plaintext;
-                $comment_count = trim(mb_split(':', $element->find('.newsfoot li a', 0)->plaintext)[1]);
+            if($element->find('.news', 0)){
+                //dd($element->innertext);
+                if ($element->find('.news ul.reset li span a', 0) &&
+                    $element->find('.poster_img img', 0) && strlen($element->find('.poster_img img', 0)->alt) > 0
+                ) {
 
-                //$image_original = $element->find('.poster_img img', 0)->$data_original;
-                preg_match("/data-original=\"(.*)\"/iU", $element->find('.poster_img', 0)->innertext, $output_posters);
-                $image_original = (isset($output_posters[1])) ? $output_posters[1] : '';
-                $image_small = str_replace('/poster/', '/poster/small/', $image_original);
+                    $id = mb_split('-', $element->find('div[id^=news-id]', 0)->id)[2];
+                    $data_original = 'data-original';
+                    $title = $element->find('.poster_img img', 0)->alt;
+                    $date = '';//$element->find('.headinginfo .date a', 0)->plaintext;
+                    $comment_count = trim(mb_split(':', $element->find('.newsfoot li', 0)->plaintext)[1]);
 
-                $description = $element->find('div[id^=news-id]', 0)->plaintext;
+                    if(isset($search_query)){
+                        $image_original = $element->find('.poster_img img', 0)->src;
+                    }else{
+                        preg_match("/data-original=\"(.*)\"/iU", $element->find('.poster_img', 0)->innertext, $output_posters);
+                        $image_original = (isset($output_posters[1])) ? $output_posters[1] : '';
+                    }
+                    $image_small = str_replace('/poster/', '/poster/small/', $image_original);
 
-                // year
-                $year = $element->find('.maincont ul li span a', 0)->plaintext;
-                //production
-                preg_match("/<b>Страна: <\\/b><span>(.*)<\\/span>/iU", $element->find('.maincont ul', 0)->innertext, $output_production);
-                // series count
-                preg_match("/<b>Количество серий: <\\/b><span>(.*)<\\/span>/iU", $element->find('.maincont ul', 0)->innertext, $output_series);
-                // gerne
-                $genres = [];
-                foreach ($element->find('span[itemprop="genre"] a') as $item) {
-                    $genres[] = $item->plaintext;
+                    $description = $element->find('div[id^=news-id]', 0)->plaintext;
+
+                    // year
+                    $year = $element->find('.news ul li span a', 0)->plaintext;
+                    //production
+                    preg_match("/<b>Страна: <\\/b><span>(.*)<\\/span>/iU", $element->find('.news ul', 0)->innertext, $output_production);
+                    // series count
+                    preg_match("/<b>Количество серий: <\\/b><span>(.*)<\\/span>/iU", $element->find('.news ul', 0)->innertext, $output_series);
+                    // gerne
+                    $genres = [];
+                    foreach ($element->find('span[itemprop="genre"] a') as $item) {
+                        $genres[] = $item->plaintext;
+                    }
+                    //aired
+                    preg_match("/<b>Дата выпуска: <\\/b><span>(.*)<\\/span>/iU", $element->find('.news ul', 0)->innertext, $output_aired);
+                    // producers
+                    preg_match("/<b>Режиссёр<\\/b>(.*)<br/iU", $element->find('.news ul', 0)->innertext, $output_producers);
+                    $producers = [];
+                    foreach ($element->find('li[itemprop="director"] span a') as $item) {
+                        $producers[] = $item->plaintext;
+                    }
+                    // author
+                    $authors = [];
+                    foreach ($element->find('li[itemprop="author"] span a') as $item) {
+                        $authors[] = $item->plaintext;
+                    }
+                    //postscoring
+                    $output_postscoring = array();
+                    preg_match("/<b>Озвучивание: <\\/b><span>(.*)<\\/span>/iU", $element->find('.news ul', 0)->innertext, $output_postscoring_tmp);
+                    if(isset($output_postscoring_tmp[1])){
+                        preg_match_all("/<a.*>(.*)<\\/a>/iU", $output_postscoring_tmp[1], $output_postscoring);
+                    }
+                    // studio
+                    $studio = $element->find('.video_info a img', 0) ? $element->find('.video_info a img', 0)->alt : false;
+                    // get movie from db
+                    $movie = Movie::firstOrCreate(['movie_id' => $id]);
+                    $movie->movie_id = $id;
+                    $movie->description = $description;
+                    $movie->title = $title;
+                    $movie->service = 'anidub';
+                    $info = array(
+                        'published_at' => $date,
+                        'images' => array(
+                            'thumbnail' => $image_small,
+                            'original' => $image_original
+                        ),
+                        'year' => $year,
+                        'production' => (isset($output_production[1])) ? trim($output_production[1]) : '',
+                        'genres' => $genres,
+                        'series' => (isset($output_series[1])) ? trim($output_series[1]) : '',
+                        'aired' => (isset($output_aired[1])) ? trim($output_aired[1]) : '',
+                        'producers' => $producers,
+                        'authors' => $authors,
+                        'postscoring' => (isset($output_postscoring[1])) ? $output_postscoring[1] : [],
+                        'studio' => $studio,
+                        'online' => true,
+                        'torrent' => false
+                    );
+                    $info['comments']['count'] = $comment_count;
+                    // merge infos
+                    $movie->info = array_merge((array)$movie->info, $info);
+                    $movie->save();
+                    array_push($items, $movie);
                 }
-                //aired
-                preg_match("/<b>Дата выпуска: <\\/b><span>(.*)<\\/span>/iU", $element->find('.maincont ul', 0)->innertext, $output_aired);
-                // producers
-                preg_match("/<b>Режиссёр<\\/b>(.*)<br/iU", $element->find('.maincont ul', 0)->innertext, $output_producers);
-                $producers = [];
-                foreach ($element->find('li[itemprop="director"] span a') as $item) {
-                    $producers[] = $item->plaintext;
-                }
-                // author
-                $authors = [];
-                foreach ($element->find('li[itemprop="author"] span a') as $item) {
-                    $authors[] = $item->plaintext;
-                }
-                //postscoring
-                $output_postscoring = array();
-                preg_match("/<b>Озвучивание: <\\/b><span>(.*)<\\/span>/iU", $element->find('.maincont ul', 0)->innertext, $output_postscoring_tmp);
-                if(isset($output_postscoring_tmp[1])){
-                preg_match_all("/<a.*>(.*)<\\/a>/iU", $output_postscoring_tmp[1], $output_postscoring);
-                }
-                // studio
-                $studio = $element->find('.video_info a img', 0) ? $element->find('.video_info a img', 0)->alt : false;
-                // get movie from db
-                $movie = Movie::firstOrCreate(['movie_id' => $id]);
-                $movie->movie_id = $id;
-                $movie->description = $description;
-                $movie->title = $title;
-                $movie->service = 'anidub';
-                $info = array(
-                    'published_at' => $date,
-                    'images' => array(
-                        'thumbnail' => $image_small,
-                        'original' => $image_original
-                    ),
-                    'year' => $year,
-                    'production' => (isset($output_production[1])) ? trim($output_production[1]) : '',
-                    'genres' => $genres,
-                    'series' => (isset($output_series[1])) ? trim($output_series[1]) : '',
-                    'aired' => (isset($output_aired[1])) ? trim($output_aired[1]) : '',
-                    'producers' => $producers,
-                    'authors' => $authors,
-                    'postscoring' => (isset($output_postscoring[1])) ? $output_postscoring[1] : [],
-                    'studio' => $studio,
-                    'online' => true,
-                    'torrent' => false
-                );
-                $info['comments']['count'] = $comment_count;
-                // merge infos
-                $movie->info = array_merge((array)$movie->info, $info);
-                $movie->save();
-                array_push($items, $movie);
             }
         }
 
@@ -283,6 +301,38 @@ class MovieController extends Controller
             ));
             $response = $client->get($url);
             $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'auto');
+            unset($client);
+            return $responseUtf8;
+        });
+    }
+
+    /**
+     * Get cached search
+     *
+     * @param string $cache_key Unique key for cache
+     * @param integer $page Page to parse
+     * @param string $search_query search query
+     * @return mixed response
+     */
+    private function getCachedSearch($cache_key, $page, $search_query)
+    {
+        return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page, $search_query) {
+            $client = new Client(array(
+                'base_uri' => env('BASE_URL_ANIDUB')
+            ));
+            $result_from = (int)$page*15+1;
+            $response = $client->post("/index.php?do=search",[
+                'form_params' => [
+                    'do' => 'search',
+                    'subaction' => 'search',
+                    'full_search' => 0,
+                    'search_start' => $page,
+                    'result_from' => ($page == 1)?1:$result_from,
+                    'story' => rawurlencode($search_query)//mb_convert_encoding($search_query,'cp1251','utf-8')
+                ]
+            ]);
+            $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'auto');
+        //dd($responseUtf8);
             unset($client);
             return $responseUtf8;
         });
