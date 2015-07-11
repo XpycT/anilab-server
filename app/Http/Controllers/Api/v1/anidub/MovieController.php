@@ -83,8 +83,11 @@ class MovieController extends Controller
                     $authors[] = $item->plaintext;
                 }
                 //postscoring
+                $output_postscoring = array();
                 preg_match("/<b>Озвучивание: <\\/b><span>(.*)<\\/span>/iU", $element->find('.maincont ul', 0)->innertext, $output_postscoring_tmp);
+                if(isset($output_postscoring_tmp[1])){
                 preg_match_all("/<a.*>(.*)<\\/a>/iU", $output_postscoring_tmp[1], $output_postscoring);
+                }
                 // studio
                 $studio = $element->find('.video_info a img', 0) ? $element->find('.video_info a img', 0)->alt : false;
                 // get movie from db
