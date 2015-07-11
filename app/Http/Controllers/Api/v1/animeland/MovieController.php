@@ -35,95 +35,97 @@ class MovieController extends Controller
         $html = new Htmldom($cachedHtml);
         // parse html
         $items = [];
-        foreach ($html->find('#dle-content .base') as $element) {
-            if ($element->find('.bheading', 0)) {
-                $id = mb_split('-', $element->find('.ratebox > div', 0)->id)[2];
-                $title = $element->find('h1.heading a', 0)->plaintext;
-                $date = $element->find('.headinginfo .date a', 0)->plaintext;
-                $comment_count = $element->find('.bmid .bmore .arg a', 0)->plaintext;
+        if (!$html->find('#dle-content  .base', 0)) {
+            foreach ($html->find('#dle-content .base') as $element) {
+                if ($element->find('.bheading', 0)) {
+                    $id = mb_split('-', $element->find('.ratebox > div', 0)->id)[2];
+                    $title = $element->find('h1.heading a', 0)->plaintext;
+                    $date = $element->find('.headinginfo .date a', 0)->plaintext;
+                    $comment_count = $element->find('.bmid .bmore .arg a', 0)->plaintext;
 
-                if($element->find('.maincont a[onclick="return hs.expand(this)"]', 0)){
-                    $image_small = env('BASE_URL_ANIMELAND') . $element->find('.maincont a[onclick="return hs.expand(this)"] img', 0)->src;
-                    $image_original = $element->find('.maincont a[onclick="return hs.expand(this)"]', 0)->href;
-                }else{
-                    $image_small = env('BASE_URL_ANIMELAND') . $element->find('.maincont td[valign="top"] img', 0)->src;
-                    $image_original = $image_small;
-                }
-                // year
-                preg_match("/\\[<a.*>(\\d+)<\\/a>\\]/", $element->find('.maincont', 0)->innertext, $output_year);
-                //production
-                preg_match("/<b>Производство<\\/b>.*<img.*>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_production);
-                //type
-                preg_match("/<b>Тип<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_type);
-                // gerne
-                preg_match("/<b>Жанр<\\/b>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_genres);
-                $genres = [];
-                list($output_genres, $genres) = Parser::getTextFromLinks($output_genres, $genres);
-                //aired
-                preg_match("/<b>Выпуск<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_aired);
-                // producers
-                preg_match("/<b>Режиссёр<\\/b>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_producers);
-                $producers = [];
-                list($output_producers, $producers) = Parser::getTextFromLinks($output_producers, $producers);
-                // author
-                preg_match("/<b>Автор оригинала<\\/b>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_author);
-                $authors = [];
-                list($output_author, $authors) = Parser::getTextFromLinks($output_author, $authors);
-                // scenarist
-                preg_match("/<b>Сценарий<\\/b>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_scenarist);
-                $scenarist = [];
-                list($output_scenarist, $scenarist) = Parser::getTextFromLinks($output_scenarist, $scenarist);
-                //postscoring
-                preg_match("/<b>Озвучка<\\/b>:\\s([a-zA-Zа-яА-Я].+)\\s/iU", $element->find('.maincont td', 1)->innertext, $output_postscoring);
-                //online
-                preg_match("/<b>Онлайн<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_online);
-                $online = (isset($output_online[1]) && trim($output_online[1]) == 'да') ? true : false;
-                //torrent
-                preg_match("/<b>Трекер<\\/b>.*&nbsp;(.*)&nbsp;/iU", $element->find('.maincont td', 1)->innertext, $output_torrent);
-                $torrent = (isset($output_torrent[1]) && trim($output_torrent[1]) == 'да') ? true : false;
-                // studio
-                preg_match("/<b>Студия<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_studio);
-                $studio = '';
-                if (isset($output_studio[1])) {
-                    $result_html = new Htmldom($output_studio[1]);
-                    if($result_html && $result_html->find('a', 0)){
-                        $studio_array = explode('/', $result_html->find('a', 0)->href);
-                        array_pop($studio_array); // empty item
-                        $studio = str_replace('+', ' ', array_pop($studio_array));
-                        $studio = str_replace('A 1', 'A-1', $studio); // A-1 studio name fix
-                        $studio = str_replace('J C', 'J.C.', $studio); // J.C. studio name fix
+                    if ($element->find('.maincont a[onclick="return hs.expand(this)"]', 0)) {
+                        $image_small = env('BASE_URL_ANIMELAND') . $element->find('.maincont a[onclick="return hs.expand(this)"] img', 0)->src;
+                        $image_original = $element->find('.maincont a[onclick="return hs.expand(this)"]', 0)->href;
+                    } else {
+                        $image_small = env('BASE_URL_ANIMELAND') . $element->find('.maincont td[valign="top"] img', 0)->src;
+                        $image_original = $image_small;
                     }
+                    // year
+                    preg_match("/\\[<a.*>(\\d+)<\\/a>\\]/", $element->find('.maincont', 0)->innertext, $output_year);
+                    //production
+                    preg_match("/<b>Производство<\\/b>.*<img.*>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_production);
+                    //type
+                    preg_match("/<b>Тип<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_type);
+                    // gerne
+                    preg_match("/<b>Жанр<\\/b>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_genres);
+                    $genres = [];
+                    list($output_genres, $genres) = Parser::getTextFromLinks($output_genres, $genres);
+                    //aired
+                    preg_match("/<b>Выпуск<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_aired);
+                    // producers
+                    preg_match("/<b>Режиссёр<\\/b>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_producers);
+                    $producers = [];
+                    list($output_producers, $producers) = Parser::getTextFromLinks($output_producers, $producers);
+                    // author
+                    preg_match("/<b>Автор оригинала<\\/b>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_author);
+                    $authors = [];
+                    list($output_author, $authors) = Parser::getTextFromLinks($output_author, $authors);
+                    // scenarist
+                    preg_match("/<b>Сценарий<\\/b>(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_scenarist);
+                    $scenarist = [];
+                    list($output_scenarist, $scenarist) = Parser::getTextFromLinks($output_scenarist, $scenarist);
+                    //postscoring
+                    preg_match("/<b>Озвучка<\\/b>:\\s([a-zA-Zа-яА-Я].+)\\s/iU", $element->find('.maincont td', 1)->innertext, $output_postscoring);
+                    //online
+                    preg_match("/<b>Онлайн<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_online);
+                    $online = (isset($output_online[1]) && trim($output_online[1]) == 'да') ? true : false;
+                    //torrent
+                    preg_match("/<b>Трекер<\\/b>.*&nbsp;(.*)&nbsp;/iU", $element->find('.maincont td', 1)->innertext, $output_torrent);
+                    $torrent = (isset($output_torrent[1]) && trim($output_torrent[1]) == 'да') ? true : false;
+                    // studio
+                    preg_match("/<b>Студия<\\/b>:(.*)<br/iU", $element->find('.maincont td', 1)->innertext, $output_studio);
+                    $studio = '';
+                    if (isset($output_studio[1])) {
+                        $result_html = new Htmldom($output_studio[1]);
+                        if ($result_html && $result_html->find('a', 0)) {
+                            $studio_array = explode('/', $result_html->find('a', 0)->href);
+                            array_pop($studio_array); // empty item
+                            $studio = str_replace('+', ' ', array_pop($studio_array));
+                            $studio = str_replace('A 1', 'A-1', $studio); // A-1 studio name fix
+                            $studio = str_replace('J C', 'J.C.', $studio); // J.C. studio name fix
+                        }
 
+                    }
+                    // get movie from db
+                    $movie = Movie::firstOrCreate(['movie_id' => $id]);
+                    $movie->movie_id = $id;
+                    $movie->title = $title;
+                    $movie->service = 'animeland';
+                    $info = array(
+                        'published_at' => $date,
+                        'images' => array(
+                            'thumbnail' => $image_small,
+                            'original' => $image_original
+                        ),
+                        'year' => (isset($output_year[1])) ? $output_year[1] : '',
+                        'production' => (isset($output_production[1])) ? trim($output_production[1]) : '',
+                        'genres' => $genres,
+                        'type' => (isset($output_type[1])) ? trim($output_type[1]) : '',
+                        'aired' => (isset($output_aired[1])) ? trim($output_aired[1]) : '',
+                        'producers' => $producers,
+                        'authors' => $authors,
+                        'scenarist' => $scenarist,
+                        'postscoring' => (isset($output_postscoring[1])) ? array($output_postscoring[1]) : array(),
+                        'studio' => $studio,
+                        'online' => $online,
+                        'torrent' => $torrent
+                    );
+                    $info['comments']['count'] = $comment_count;
+                    // merge infos
+                    $movie->info = array_merge((array)$movie->info, $info);
+                    $movie->save();
+                    array_push($items, $movie);
                 }
-                // get movie from db
-                $movie = Movie::firstOrCreate(['movie_id' => $id]);
-                $movie->movie_id = $id;
-                $movie->title = $title;
-                $movie->service = 'animeland';
-                $info = array(
-                    'published_at' => $date,
-                    'images' => array(
-                        'thumbnail' => $image_small,
-                        'original' => $image_original
-                    ),
-                    'year' => (isset($output_year[1])) ? $output_year[1] : '',
-                    'production' => (isset($output_production[1])) ? trim($output_production[1]) : '',
-                    'genres' => $genres,
-                    'type' => (isset($output_type[1])) ? trim($output_type[1]) : '',
-                    'aired' => (isset($output_aired[1])) ? trim($output_aired[1]) : '',
-                    'producers' => $producers,
-                    'authors' => $authors,
-                    'scenarist' => $scenarist,
-                    'postscoring' => (isset($output_postscoring[1])) ? array($output_postscoring[1]) : array(),
-                    'studio' => $studio,
-                    'online' => $online,
-                    'torrent' => $torrent
-                );
-                $info['comments']['count'] = $comment_count;
-                // merge infos
-                $movie->info = array_merge((array)$movie->info, $info);
-                $movie->save();
-                array_push($items, $movie);
             }
         }
         $html->clear();
