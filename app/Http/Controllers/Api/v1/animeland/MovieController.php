@@ -38,7 +38,7 @@ class MovieController extends Controller
                 'status' => $response->getReasonPhrase(),
                 'page' => (int)$page,
                 'movies' => $items
-            ), $response->getStatusCode());
+            ), 200);
         }
         $html = new Htmldom($cachedHtml);
         // parse html
