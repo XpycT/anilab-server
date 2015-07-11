@@ -303,7 +303,7 @@ class MovieController extends Controller
     private function getCachedPage($cache_key, $page, $path)
     {
         return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page, $path) {
-            $url = isset($path) ? $path . 'page/' . $page . '/' : '/page/' . $page . '/';
+            $url = isset($path) ? urldecode($path) . 'page/' . $page . '/' : '/page/' . $page . '/';
             $client = new Client(array(
                 'base_uri' => env('BASE_URL_ANIMELAND')
             ));
