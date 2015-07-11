@@ -109,7 +109,7 @@ class MovieController extends Controller
                     'aired' => (isset($output_aired[1])) ? trim($output_aired[1]) : '',
                     'producers' => $producers,
                     'authors' => $authors,
-                    'postscoring' => (isset($output_postscoring[1])) ? $output_postscoring[1] : '',
+                    'postscoring' => (isset($output_postscoring[1])) ? $output_postscoring[1] : [],
                     'studio' => $studio,
                     'online' => true,
                     'torrent' => false
