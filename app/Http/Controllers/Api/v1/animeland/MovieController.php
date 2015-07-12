@@ -29,28 +29,30 @@ class MovieController extends Controller
         $path = Request::input('path');
         $search_query = Request::input('q');
 
-        $key= 'animeland_page_' . $page; // ex. animeland_page_1
-        if(isset($path)){
+        $key = 'animeland_page_' . $page; // ex. animeland_page_1
+        if (isset($path)) {
             $key = 'animeland_' . str_replace('/', '_', $path) . '_page_' . $page; //ex. animeland__anime-rus_tv-rus__page_1
-        }else if(isset($search_query)){
+        } else if (isset($search_query)) {
             $key = 'animeland_' . md5($search_query) . '_page_' . $page; //ex. animeland_34jhg234876sdfsjknk98_page_1
         }
         $items = [];
         // get page or cache
         try {
-            if(isset($search_query)){
+            if (isset($search_query)) {
                 $cachedHtml = $this->getCachedSearch($key, $page, $search_query);
-            }else{
+            } else {
                 $cachedHtml = $this->getCachedPage($key, $page, $path);
             }
 
         } catch (ClientException $e) {
             $response = $e->getResponse();
-            return response()->json(array(
-                'status' => $response->getReasonPhrase(),
-                'page' => (int)$page,
-                'movies' => $items
-            ), 200);
+            if ($response->getStatusCode() == 404) {
+                return response()->json(array(
+                    'status' => $response->getReasonPhrase(),
+                    'page' => (int)$page,
+                    'movies' => $items
+                ), 200);
+            }
         }
         $html = new Htmldom($cachedHtml);
         // parse html
@@ -60,14 +62,14 @@ class MovieController extends Controller
                 // get id from title link
                 //$id = mb_split('-', $element->find('.ratebox > div', 0)->id)[2];
                 $idArray = mb_split('/', $element->find('h1.heading a', 0)->href);
-                $id = mb_split('-',end($idArray))[0];
+                $id = mb_split('-', end($idArray))[0];
 
                 $title = $element->find('h1.heading a', 0)->plaintext;
-                $date = ($element->find('.headinginfo .date a', 0))?$element->find('.headinginfo .date a', 0)->plaintext:$element->find('.headinginfo .date b', 0)->plaintext;
+                $date = ($element->find('.headinginfo .date a', 0)) ? $element->find('.headinginfo .date a', 0)->plaintext : $element->find('.headinginfo .date b', 0)->plaintext;
                 //comment count
-                if($element->find('.bmid .bmore .arg a', 0)){
+                if ($element->find('.bmid .bmore .arg a', 0)) {
                     $comment_count = $element->find('.bmid .bmore .arg a', 0)->plaintext;
-                }else{
+                } else {
                     $comment_count = trim(mb_split(':', $element->find('.bmid .bmore .arg', 0)->plaintext)[1]);
 
                 }
@@ -328,15 +330,15 @@ class MovieController extends Controller
             $client = new Client(array(
                 'base_uri' => env('BASE_URL_ANIMELAND')
             ));
-            $result_from = (int)$page*7+1;
-            $response = $client->post("/index.php?do=search",[
+            $result_from = (int)$page * 7 + 1;
+            $response = $client->post("/index.php?do=search", [
                 'form_params' => [
                     'do' => 'search',
                     'subaction' => 'search',
                     'full_search' => 0,
                     'search_start' => $page,
-                    'result_from' => ($page == 1)?1:$result_from,
-                    'story' => mb_convert_encoding($search_query,'cp1251','utf-8')
+                    'result_from' => ($page == 1) ? 1 : $result_from,
+                    'story' => mb_convert_encoding($search_query, 'cp1251', 'utf-8')
                 ]
             ]);
             $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');

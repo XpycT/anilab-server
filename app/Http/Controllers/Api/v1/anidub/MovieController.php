@@ -44,11 +44,13 @@ class MovieController extends Controller
             }
         } catch (ClientException $e) {
             $response = $e->getResponse();
-            return response()->json(array(
-                'status' => $response->getReasonPhrase(),
-                'page' => (int)$page,
-                'movies' => $items
-            ), 200);
+            if ($response->getStatusCode() == 404) {
+                return response()->json(array(
+                    'status' => $response->getReasonPhrase(),
+                    'page' => (int)$page,
+                    'movies' => $items
+                ), 200);
+            }
         }
         $html = new Htmldom($cachedHtml);
         // parse html
