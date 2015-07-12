@@ -322,7 +322,7 @@ class MovieController extends Controller
             $client = new Client(array(
                 'base_uri' => env('BASE_URL_ANIDUB')
             ));
-            $result_from = (int)$page*15+1;
+            $result_from = ((int)$page*15-15)+1;
             $response = $client->post("/index.php?do=search",[
                 'form_params' => [
                     'do' => 'search',

@@ -330,7 +330,7 @@ class MovieController extends Controller
             $client = new Client(array(
                 'base_uri' => env('BASE_URL_ANIMELAND')
             ));
-            $result_from = (int)$page * 7 + 1;
+            $result_from = ((int)$page * 7 - 7) + 1;
             $response = $client->post("/index.php?do=search", [
                 'form_params' => [
                     'do' => 'search',
