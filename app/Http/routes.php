@@ -15,7 +15,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::group(array('prefix' => 'api/v1'), function()
+Route::group(array('prefix' => 'api/v1','middleware' => 'api'), function()
 {
     Route::group(array('prefix' => 'animeland'), function()
     {
