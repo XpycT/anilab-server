@@ -15,7 +15,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::group(array('prefix' => 'api/v1','middleware' => 'api'), function()
+Route::group(array('prefix' => 'api/v1'/*,'middleware' => 'api'*/), function()
 {
     Route::group(array('prefix' => 'animeland'), function()
     {
@@ -30,3 +30,8 @@ Route::group(array('prefix' => 'api/v1','middleware' => 'api'), function()
         Route::get('show/{movieId}/comments', 'Api\v1\anidub\MovieController@comments')->where('movieId', '[0-9]+');
     });
 });
+
+// Logging in and out
+get('/auth/login', 'Auth\AuthController@getLogin');
+post('/auth/login', 'Auth\AuthController@postLogin');
+get('/auth/logout', 'Auth\AuthController@getLogout');
