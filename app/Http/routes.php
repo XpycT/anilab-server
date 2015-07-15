@@ -14,6 +14,7 @@
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('update.json', 'Admin\UpdateController@getVersion');
 
 Route::group(array('prefix' => 'api/v1','middleware' => 'api'), function () {
     Route::group(array('prefix' => 'animeland'), function () {
@@ -33,7 +34,8 @@ Route::get('admin', function () {
     return redirect('admin/token');
 });
 Route::group(array('namespace' => 'Admin', 'middleware' => 'auth' ), function () {
-    Route::resource('admin/token', 'TokenController');
+    Route::resource('admin/token', 'TokenController', ['except' => 'show']);
+    Route::resource('admin/update', 'UpdateController', ['except' => 'show']);
 });
 
 // Logging in and out

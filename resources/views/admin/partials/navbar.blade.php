@@ -3,6 +3,9 @@
         <li @if (Request::is('admin/token*')) class="active" @endif>
             {!! Html::linkAction('Admin\TokenController@index', 'Tokens') !!}
         </li>
+        <li @if (Request::is('admin/update*')) class="active" @endif>
+            {!! Html::linkAction('Admin\UpdateController@index', 'Updates') !!}
+        </li>
     @endif
 </ul>
 
