@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Token;
 use Closure;
 
 class ApiKeyMiddleware
@@ -15,14 +16,17 @@ class ApiKeyMiddleware
      */
     public function handle($request, Closure $next)
     {
-        /**
-         * com.xpyct.apps.anilab
-         * 893c35e9d980d872836b118577b69e9d
-         */
-        if($request->header('key') != env('API_KEY')){
+        if(!$request->header('x-api-key')){
             return response()->json([
-                'status'=>'пум пурум пум пум пурум пум....'
+                'status'=>'Unauthorized'
             ],401);
+        }else{
+            $token  = Token::hasPublicKey($request->header('x-api-key'))->first();
+            if(!$token){
+                return response()->json([
+                    'status'=>'Forbidden'
+                ],403);
+            }
         }
         return $next($request);
     }

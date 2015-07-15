@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Requests\TokenCreateRequest;
+use App\Http\Requests\TokenUpdateRequest;
 use App\Token;
+use Auth;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
@@ -10,6 +13,11 @@ use App\Http\Controllers\Controller;
 
 class TokenController extends Controller
 {
+    protected $fields = [
+        'name' => '',
+        'description' => '',
+        'package_id' => ''
+    ];
     /**
      * Display a listing of the resource.
      *
@@ -29,7 +37,11 @@ class TokenController extends Controller
      */
     public function create()
     {
-        //
+        $data = [];
+        foreach ($this->fields as $field => $default) {
+            $data[$field] = old($field, $default);
+        }
+        return view('admin.token.create',$data);
     }
 
     /**
@@ -38,9 +50,12 @@ class TokenController extends Controller
      * @param  Request  $request
      * @return Response
      */
-    public function store(Request $request)
+    public function store(TokenCreateRequest $request)
     {
-        //
+        $token = new Token($request->all());
+        Auth::user()->tokens()->save($token);
+
+        return redirect('admin/token')->withSuccess("The token '$token->package_id' was created.");
     }
 
     /**
@@ -62,7 +77,13 @@ class TokenController extends Controller
      */
     public function edit($id)
     {
-        //
+        $token = Token::findOrFail($id);
+        $data = ['id' => $id];
+        foreach (array_keys($this->fields) as $field) {
+            $data[$field] = old($field, $token->$field);
+        }
+
+        return view('admin.token.edit', $data);
     }
 
     /**
@@ -72,9 +93,18 @@ class TokenController extends Controller
      * @param  int  $id
      * @return Response
      */
-    public function update(Request $request, $id)
+    public function update(TokenUpdateRequest $request, $id)
     {
-        //
+        $token = Auth::user()->tokens()->findOrFail($id);
+        //$token = Token::findOrFail($id);
+        foreach (array_keys($this->fields) as $field) {
+            $token->$field = $request->get($field);
+        }
+        //$token->save();
+
+        Auth::user()->tokens()->save($token);
+
+        return redirect()->action('Admin\TokenController@edit', array($id))->withSuccess("Changes saved.");
     }
 
     /**
@@ -85,6 +115,10 @@ class TokenController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $token = Auth::user()->tokens()->findOrFail($id);
+        $token->delete();
+
+        return redirect('admin/token')
+            ->withSuccess("The '$token->package_id' app has been deleted.");
     }
 }
