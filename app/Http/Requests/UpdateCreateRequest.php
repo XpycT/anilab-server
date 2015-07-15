@@ -26,7 +26,8 @@ class UpdateCreateRequest extends Request
         return [
             'version_code' => 'required|numeric|unique:updates|max:150',
             'version_name' => 'required|max:20',
-            'content' => 'required'
+            'content' => 'required',
+            'apk_file' => 'required',
         ];
     }
 }

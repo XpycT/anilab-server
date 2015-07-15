@@ -8,5 +8,5 @@ class Update extends Model
 {
     protected $fillable = ['version_code', 'version_name', 'content'];
 
-    protected $hidden = ['id','created_at','updated_at'];
+    protected $hidden = ['id','created_at','updated_at','filename','mime','original_filename'];
 }

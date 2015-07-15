@@ -14,7 +14,8 @@
 Route::get('/', function () {
     return view('welcome');
 });
-Route::get('update.json', 'Admin\UpdateController@getVersion');
+Route::get('update/info', 'Admin\UpdateController@getVersion');
+Route::get('update/file', 'Admin\UpdateController@getFile');
 
 Route::group(array('prefix' => 'api/v1','middleware' => 'api'), function () {
     Route::group(array('prefix' => 'animeland'), function () {

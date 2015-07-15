@@ -17,6 +17,9 @@ class CreateUpdatesTable extends Migration
             $table->integer('version_code')->unsigned()->unique();
             $table->text('version_name');
             $table->text('content');
+            $table->string('filename');
+            $table->string('mime');
+            $table->string('original_filename');
             $table->timestamps();
         });
     }

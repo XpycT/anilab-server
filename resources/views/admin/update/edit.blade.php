@@ -17,9 +17,9 @@
                     <div class="panel-body">
                         @include('admin.partials.success')
                         @include('admin.partials.errors')
-                        {!! Form::open(array('action' => array('Admin\UpdateController@update',$id) , 'method' => 'put', 'class'=>'form-horizontal')) !!}
-                        {!! Form::hidden('id', $id, array('name'=>'id')) !!}
-                            @include('admin.update._form')
+                        {!! Form::open(array('action' => array('Admin\UpdateController@update',$update->id), 'files' => true , 'method' => 'put', 'class'=>'form-horizontal')) !!}
+                        {!! Form::hidden('id', $update->id, array('name'=>'id')) !!}
+                            @include('admin.update._form_edit')
                             <div class="form-group">
                                 <div class="col-md-7 col-md-offset-3">
                                     <button type="submit" class="btn btn-primary btn-md">
@@ -57,7 +57,7 @@
                     </p>
                 </div>
                 <div class="modal-footer">
-                    {!! Form::open(array('action' => array('Admin\UpdateController@destroy',$id) , 'method' => 'DELETE', 'class'=>'form-horizontal')) !!}
+                    {!! Form::open(array('action' => array('Admin\UpdateController@destroy',$update->id) , 'method' => 'DELETE', 'class'=>'form-horizontal')) !!}
                         <button type="button" class="btn btn-default"
                                 data-dismiss="modal">Close</button>
                         <button type="submit" class="btn btn-danger">

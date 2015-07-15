@@ -16,8 +16,8 @@
                     </div>
                     <div class="panel-body">
                         @include('admin.partials.errors')
-                        {!! Form::open(array('action' => 'Admin\UpdateController@store' , 'method' => 'post', 'class'=>'form-horizontal')) !!}
-                            @include('admin.update._form')
+                        {!! Form::open(array('action' => 'Admin\UpdateController@store' , 'method' => 'post', 'class'=>'form-horizontal', 'files' => true)) !!}
+                            @include('admin.update._form_create')
                             <div class="form-group">
                                 <div class="col-md-7 col-md-offset-3">
                                     <button type="submit" class="btn btn-primary btn-md">
