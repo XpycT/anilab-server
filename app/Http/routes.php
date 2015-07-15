@@ -15,23 +15,28 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::group(array('prefix' => 'api/v1'/*,'middleware' => 'api'*/), function()
-{
-    Route::group(array('prefix' => 'animeland'), function()
-    {
-        Route::match(['get', 'post'],'page/{page?}', 'Api\v1\animeland\MovieController@page')->where('page', '[0-9]+');
+Route::group(array('prefix' => 'api/v1'/*,'middleware' => 'api'*/), function () {
+    Route::group(array('prefix' => 'animeland'), function () {
+        Route::match(['get', 'post'], 'page/{page?}', 'Api\v1\animeland\MovieController@page')->where('page', '[0-9]+');
         Route::get('show/{movieId}', 'Api\v1\animeland\MovieController@show')->where('movieId', '[0-9]+');
         Route::get('show/{movieId}/comments', 'Api\v1\animeland\MovieController@comments')->where('movieId', '[0-9]+');
     });
-    Route::group(array('prefix' => 'anidub'), function()
-    {
-        Route::match(['get', 'post'],'page/{page?}', 'Api\v1\anidub\MovieController@page')->where('page', '[0-9]+');
+    Route::group(array('prefix' => 'anidub'), function () {
+        Route::match(['get', 'post'], 'page/{page?}', 'Api\v1\anidub\MovieController@page')->where('page', '[0-9]+');
         Route::get('show/{movieId}', 'Api\v1\anidub\MovieController@show')->where('movieId', '[0-9]+');
         Route::get('show/{movieId}/comments', 'Api\v1\anidub\MovieController@comments')->where('movieId', '[0-9]+');
     });
 });
 
+// Admin area
+Route::get('admin', function () {
+    return redirect('admin/token');
+});
+Route::group(array('namespace' => 'Admin', 'middleware' => 'auth' ), function () {
+    Route::resource('admin/token', 'TokenController');
+});
+
 // Logging in and out
-get('/auth/login', 'Auth\AuthController@getLogin');
-post('/auth/login', 'Auth\AuthController@postLogin');
-get('/auth/logout', 'Auth\AuthController@getLogout');
+Route::get('auth/login', 'Auth\AuthController@getLogin');
+Route::post('auth/login', 'Auth\AuthController@postLogin');
+Route::get('auth/logout', 'Auth\AuthController@getLogout');

@@ -7,7 +7,7 @@
 
     <title>{{ config('api.title') }}</title>
 
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/css/admin.css" rel="stylesheet">
     @yield('styles')
 
   <!--[if lt IE 9]>
@@ -37,8 +37,7 @@
 
 @yield('content')
 
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script src="/assets/js/admin.js"></script>
 
 @yield('scripts')
 

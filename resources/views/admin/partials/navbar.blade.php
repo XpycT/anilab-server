@@ -1,13 +1,7 @@
 <ul class="nav navbar-nav">
     @if (Auth::check())
-        <li @if (Request::is('admin/post*')) class="active" @endif>
-            <a href="/admin/post">Posts</a>
-        </li>
-        <li @if (Request::is('admin/tag*')) class="active" @endif>
-            <a href="/admin/tag">Tags</a>
-        </li>
-        <li @if (Request::is('admin/upload*')) class="active" @endif>
-            <a href="/admin/upload">Uploads</a>
+        <li @if (Request::is('admin/token*')) class="active" @endif>
+            {!! Html::linkAction('Admin\TokenController@index', 'Tokens') !!}
         </li>
     @endif
 </ul>
