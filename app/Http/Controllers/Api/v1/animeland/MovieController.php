@@ -193,6 +193,35 @@ class MovieController extends Controller
             );
             array_push($screenshots, $screen_item);
         }
+        //load movie from db
+        $movie = Movie::firstOrCreate(['movie_id' => $movieId]);
+        $movie->title = trim($html->find('h1.heading #news-title', 0)->plaintext);
+        $movie->description = trim(nl2br($description));
+
+        $info = is_object($movie->info) ? $movie->info : new \stdClass();
+        $info->screenshots = $screenshots;
+        $movie->info = $info;
+        $movie->save();
+
+        $html->clear();
+        unset($html);
+
+        return response()->json(array(
+            'status' => 'success',
+            'movie' => $movie,
+        ), 200);
+    }
+
+    /**
+     * Show files list
+     *
+     * @param $movieId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function files($movieId){
+        // get page from cache
+        $cachedHtml = $this->getCachedFullPage('animeland_show_' . $movieId, $movieId);
+        $html = new Htmldom($cachedHtml);
         //files
         $files = array();
         foreach ($html->find('.fullstory div.maincont a[href*=aniplay]') as $file) {
@@ -213,24 +242,7 @@ class MovieController extends Controller
         });
         $grouped_files = Arrays::values($grouped_files_);
 
-        //load movie from db
-        $movie = Movie::firstOrCreate(['movie_id' => $movieId]);
-        $movie->title = trim($html->find('h1.heading #news-title', 0)->plaintext);
-        $movie->description = trim(nl2br($description));
-
-        $info = is_object($movie->info) ? $movie->info : new \stdClass();
-        $info->screenshots = $screenshots;
-        $info->files = $grouped_files;
-        $movie->info = $info;
-        $movie->save();
-
-        $html->clear();
-        unset($html);
-
-        return response()->json(array(
-            'status' => 'success',
-            'movie' => $movie,
-        ), 200);
+        return response()->json($grouped_files, 200);
     }
 
     /**
