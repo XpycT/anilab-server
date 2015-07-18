@@ -233,6 +233,12 @@ class MovieController extends Controller
         ), 200);
     }
 
+    /**
+     * Get comments list with limit
+     *
+     * @param $movieId
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function comments($movieId)
     {
         $comments = array();
@@ -247,7 +253,10 @@ class MovieController extends Controller
 
         //fetch all comments pages
         $n = $latest_page ? $latest_page : 1;
+        $index=0; // index for page count
         for ($i = 1; $i <= $n; $i++) {
+            ++$index;
+            if($index > config('api.comment_page_limit')) continue;
             $url = sprintf('http://animeland.su/engine/ajax/comments.php?cstart=%d&news_id=%d&skin=AnimeLand', $i, $movieId);
 
             $response_json = Cache::remember(md5($url), env('PAGE_CACHE_MIN'), function () use ($url) {
@@ -270,7 +279,7 @@ class MovieController extends Controller
                     'date' => $comment_item->find('.comhead ul>li.first', 0)->plaintext,
                     'auhor' => $comment_item->find('h3 a', 0)->plaintext,
                     'body' => [
-                        'plain' => $body_text,
+                        'plain' => trim($body_text),
                         'html' => $body
                     ],
                     'avatar' => $comment_item->find(".avatarbox > img", 0)->src
@@ -281,15 +290,16 @@ class MovieController extends Controller
 
         //get movie from db
         $movie = Movie::firstOrCreate(['movie_id' => $movieId]);
-        $info = is_object($movie->info) ? $movie->info : new \stdClass();
+        /*$info = is_object($movie->info) ? $movie->info : new \stdClass();
         $info->comments = isset($info->comments) ? $info->comments : new \stdClass();
         $info->comments->list = $comments;
         $movie->info = $info;
-        $movie->save();
+        $movie->save();*/
 
         return response()->json(array(
             'status' => 'success',
-            'movie' => $movie,
+            'count' => $movie->info->comments->count,
+            'list' => $comments,
         ), 200);
     }
 

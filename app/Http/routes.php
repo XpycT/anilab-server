@@ -22,11 +22,13 @@ Route::group(array('prefix' => 'api/v1'/*,'middleware' => 'api'*/), function () 
         Route::match(['get', 'post'], 'page/{page?}', 'Api\v1\animeland\MovieController@page')->where('page', '[0-9]+');
         Route::get('show/{movieId}', 'Api\v1\animeland\MovieController@show')->where('movieId', '[0-9]+');
         Route::get('show/{movieId}/comments', 'Api\v1\animeland\MovieController@comments')->where('movieId', '[0-9]+');
+        Route::get('show/{movieId}/files', 'Api\v1\animeland\MovieController@files')->where('movieId', '[0-9]+');
     });
     Route::group(array('prefix' => 'anidub'), function () {
         Route::match(['get', 'post'], 'page/{page?}', 'Api\v1\anidub\MovieController@page')->where('page', '[0-9]+');
         Route::get('show/{movieId}', 'Api\v1\anidub\MovieController@show')->where('movieId', '[0-9]+');
         Route::get('show/{movieId}/comments', 'Api\v1\anidub\MovieController@comments')->where('movieId', '[0-9]+');
+        Route::get('show/{movieId}/files', 'Api\v1\anidub\MovieController@files')->where('movieId', '[0-9]+');
     });
 });
 

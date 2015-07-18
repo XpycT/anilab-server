@@ -265,6 +265,12 @@ class MovieController extends Controller
         ), 200);
     }
 
+    /**
+     * Get comments list with limit
+     *
+     * @param $movieId
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function comments($movieId)
     {
         $comments = array();
@@ -316,7 +322,7 @@ class MovieController extends Controller
                     'date' => $comment_item->find('.comm_inf ul>li', 0)->plaintext,
                     'auhor' => $comment_item->find('.comm_title a', 0)->plaintext,
                     'body' => [
-                        'plain' => $body_text,
+                        'plain' => trim($body_text),
                         'html' => $body
                     ],
                     'avatar' => $comment_item->find(".commcont center > img", 0)->src
@@ -327,15 +333,16 @@ class MovieController extends Controller
 
         //get movie from db
         $movie = Movie::firstOrCreate(['movie_id' => $movieId]);
-        $info = is_object($movie->info) ? $movie->info : new \stdClass();
+        /*$info = is_object($movie->info) ? $movie->info : new \stdClass();
         $info->comments = isset($info->comments) ? $info->comments : new \stdClass();
         $info->comments->list = $comments;
         $movie->info = $info;
-        //$movie->save();
+        $movie->save();*/
 
         return response()->json(array(
             'status' => 'success',
-            'movie' => $movie,
+            'count' => $movie->info->comments->count,
+            'list' => $comments,
         ), 200);
     }
 
