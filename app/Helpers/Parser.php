@@ -153,8 +153,11 @@ class Parser
                 unset($client);*/
                 $query_string = parse_url($original_link,PHP_URL_QUERY);
                 parse_str($query_string, $get_array);
-
-                $download_link = sprintf('http://vk.com/video.php?act=a_flash_vars&vid=%s_%s',$get_array['oid'],$get_array['id']);
+                if(isset($get_array['oid']) && isset($get_array['id'])){
+                    $download_link = sprintf('http://vk.com/video.php?act=a_flash_vars&vid=%s_%s',$get_array['oid'],$get_array['id']);
+                }else{
+                    $download_link = $original_link;
+                }
 
                 break;
 

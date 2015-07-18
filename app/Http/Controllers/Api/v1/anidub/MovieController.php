@@ -28,18 +28,18 @@ class MovieController extends Controller
         $path = Request::input('path');
         $search_query = Request::input('q');
 
-        $key= 'anidub_page_' . $page; // ex. anidub_page_1
-        if(isset($path)){
+        $key = 'anidub_page_' . $page; // ex. anidub_page_1
+        if (isset($path)) {
             $key = 'anidub_' . str_replace('/', '_', $path) . '_page_' . $page; //ex. anidub__anime-rus_tv-rus__page_1
-        }else if(isset($search_query)){
+        } else if (isset($search_query)) {
             $key = 'anidub_' . md5($search_query) . '_page_' . $page; //ex. anidub_34jhg234876sdfsjknk98_page_1
         }
         $items = [];
         // get page or cache
         try {
-            if(isset($search_query)){
+            if (isset($search_query)) {
                 $cachedHtml = $this->getCachedSearch($key, $page, $search_query);
-            }else{
+            } else {
                 $cachedHtml = $this->getCachedPage($key, $page, $path);
             }
         } catch (ClientException $e) {
@@ -55,7 +55,7 @@ class MovieController extends Controller
         $html = new Htmldom($cachedHtml);
         // parse html
         foreach ($html->find('#dle-content .news_short') as $element) {
-            if($element->find('.news', 0)){
+            if ($element->find('.news', 0)) {
                 //dd($element->innertext);
                 if ($element->find('.news ul.reset li span a', 0) &&
                     $element->find('.poster_img img', 0) && strlen($element->find('.poster_img img', 0)->alt) > 0
@@ -67,9 +67,9 @@ class MovieController extends Controller
                     $date = '';//$element->find('.headinginfo .date a', 0)->plaintext;
                     $comment_count = trim(mb_split(':', $element->find('.newsfoot li', 0)->plaintext)[1]);
 
-                    if(isset($search_query)){
+                    if (isset($search_query)) {
                         $image_original = $element->find('.poster_img img', 0)->src;
-                    }else{
+                    } else {
                         preg_match("/data-original=\"(.*)\"/iU", $element->find('.poster_img', 0)->innertext, $output_posters);
                         $image_original = (isset($output_posters[1])) ? $output_posters[1] : '';
                     }
@@ -104,7 +104,7 @@ class MovieController extends Controller
                     //postscoring
                     $output_postscoring = array();
                     preg_match("/<b>Озвучивание: <\\/b><span>(.*)<\\/span>/iU", $element->find('.news ul', 0)->innertext, $output_postscoring_tmp);
-                    if(isset($output_postscoring_tmp[1])){
+                    if (isset($output_postscoring_tmp[1])) {
                         preg_match_all("/<a.*>(.*)<\\/a>/iU", $output_postscoring_tmp[1], $output_postscoring);
                     }
                     // studio
@@ -163,6 +163,47 @@ class MovieController extends Controller
         // get page from cache
         $cachedHtml = $this->getCachedFullPage('anidub_show_' . $movieId, $movieId);
         $html = new Htmldom($cachedHtml);
+
+        if ($html->find('.infocon strong', 0)) {
+            if ($html->find('.infocon strong', 0)->plaintext == "Внимание, обнаружена ошибка") {
+                $movie = Movie::firstOrCreate(['movie_id' => $movieId]);
+
+                // hack: get info from anidub api
+                $client = new Client();
+                $response = $client->get(config('api.api_anidub_info_url') . $movieId);
+                $json = json_decode($response->getBody(true),false);
+
+                $files = array();
+                foreach($json->Responce->Episodes as $episode){
+                    $file_item = array(
+                        'service' => Parser::getVideoService($episode->Url),
+                        'part' => $episode->Number,
+                        'original_link' => $episode->Url,
+                        'download_link' => Parser::createDownloadLink($episode->Url)
+                    );
+                    array_push($files, $file_item);
+                }
+
+
+                $movie->title = trim($json->Responce->Title);
+                $movie->description = trim($json->Responce->Information->Description);
+
+                $info = is_object($movie->info) ? $movie->info : new \stdClass();
+                $info->screenshots = array();
+                $info->series = $json->Responce->Information->Episodes;
+                $info->production = $json->Responce->Information->Country;
+                $info->postscoring = explode(', ',$json->Responce->Information->Duber);
+                $info->files = $files;
+                $movie->info = $info;
+                $movie->save();
+
+                return response()->json(array(
+                    'status' => 'auth_needed',
+                    'movie' => $movie,
+                ), 200);
+            }
+        }
+
         //description
         $html->find('div[itemprop="description"] div[id^="news-id-"]', 0)->outertext = '';
         $html->find('div[itemprop="description"] div[id^="news-id-"]', 0)->innertext = '';
@@ -232,6 +273,15 @@ class MovieController extends Controller
         $html = new Htmldom($cachedHtml);
         // create comment url
         $latest_page = ($html->find('.dle-comments-navigation .navigation a', -1) !== null) ? $html->find('.dle-comments-navigation .navigation a', -1)->innertext : null;
+
+        if ($html->find('.infocon strong', 0)) {
+            if ($html->find('.infocon strong', 0)->plaintext == "Внимание, обнаружена ошибка") {
+                $movie_tmp = Movie::firstOrCreate(['movie_id' => $movieId]);
+                $json = json_decode($movie_tmp->toJson());
+                $latest_page = (int)((int)$json->info->comments->count / 10);
+            }
+        }
+
         //clear html
         $html->clear();
         unset($html);
@@ -239,7 +289,10 @@ class MovieController extends Controller
         //fetch all comments pages
         $n = $latest_page ? $latest_page : 1;
 //        for ($i = 1; $i <= $n; $i++) {
+        $index=0; // index for page count
         for ($i = $n; $i > 0; $i--) {
+            ++$index;
+            if($index > config('api.comment_page_limit')) continue;
             $url = sprintf('http://online.anidub.com/engine/ajax/comments.php?cstart=%d&news_id=%d&skin=Anidub_online', $i, $movieId);
 
             $response_json = Cache::remember(md5($url), env('PAGE_CACHE_MIN'), function () use ($url) {
@@ -278,7 +331,7 @@ class MovieController extends Controller
         $info->comments = isset($info->comments) ? $info->comments : new \stdClass();
         $info->comments->list = $comments;
         $movie->info = $info;
-        $movie->save();
+        //$movie->save();
 
         return response()->json(array(
             'status' => 'success',
@@ -322,19 +375,19 @@ class MovieController extends Controller
             $client = new Client(array(
                 'base_uri' => env('BASE_URL_ANIDUB')
             ));
-            $result_from = ((int)$page*15-15)+1;
-            $response = $client->post("/index.php?do=search",[
+            $result_from = ((int)$page * 15 - 15) + 1;
+            $response = $client->post("/index.php?do=search", [
                 'form_params' => [
                     'do' => 'search',
                     'subaction' => 'search',
                     'full_search' => 0,
                     'search_start' => $page,
-                    'result_from' => ($page == 1)?1:$result_from,
+                    'result_from' => ($page == 1) ? 1 : $result_from,
                     'story' => rawurlencode($search_query)//mb_convert_encoding($search_query,'cp1251','utf-8')
                 ]
             ]);
             $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'auto');
-        //dd($responseUtf8);
+            //dd($responseUtf8);
             unset($client);
             return $responseUtf8;
         });
