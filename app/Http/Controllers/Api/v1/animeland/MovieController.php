@@ -289,7 +289,7 @@ class MovieController extends Controller
                 $comment = array(
                     'comment_id' => $commentId,
                     'date' => $comment_item->find('.comhead ul>li.first', 0)->plaintext,
-                    'auhor' => $comment_item->find('h3 a', 0)->plaintext,
+                    'author' => $comment_item->find('h3 a', 0)->plaintext,
                     'body' => trim($body_text),
                     'avatar' => $comment_item->find(".avatarbox > img", 0)->src
                 );
