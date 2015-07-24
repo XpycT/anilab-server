@@ -222,16 +222,18 @@ class MovieController extends Controller
         // get page from cache
         $cachedHtml = $this->getCachedFullPage('animeland_show_' . $movieId, $movieId);
         $html = new Htmldom($cachedHtml);
+        $title = trim(mb_split('/',$html->find('h1.heading #news-title', 0)->plaintext)[0]);
         //files
         $files = array();
         foreach ($html->find('.fullstory div.maincont a[href*=aniplay]') as $file) {
             preg_match("/javascript:aniplay\\('(.*)','link(\\d+)'\\)/iU", $file->href, $output_file);
             $part = $output_file[2];
             $link = $output_file[1];
+            $part_title = $title. ' - '.$part.' серия';
 
             $file_item = array(
                 'service' => Parser::getVideoService($link),
-                'part' => $part,
+                'part' => $part_title,
                 'original_link' => $link,
                 'download_link' => Parser::createDownloadLink($link)
             );
