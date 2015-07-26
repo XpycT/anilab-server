@@ -254,10 +254,20 @@ class MovieController extends Controller
         $html = new Htmldom($cachedHtml);
         //files
         $files = array();
-        foreach ($html->find('select[id^=sel] option') as $file) {
-
-            $part = $file->plaintext;
-            $link = $file->value;
+        $findedFiles = $html->find('select[id^=sel] option');
+        if(count($findedFiles) > 1){
+            $fileItems = $findedFiles;
+        }else{
+            $fileItems = $html->find('.players iframe');
+        }
+        foreach ($fileItems as $file) {
+            if(count($findedFiles) > 1) {
+                $part = $file->plaintext;
+                $link = $file->value;
+            }else{
+                $part = trim(mb_split('/',$html->find('title',0)->plaintext)[0]);
+                $link = $file->src;
+            }
             //fix vk link
             $link = explode('|', $link)[0];
             $link = str_replace('pp.anidub-online.ru/video_ext.php', 'vk.com/video_ext.php', $link);
