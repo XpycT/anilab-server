@@ -49,6 +49,10 @@ gulp.task("copyfiles", function() {
     gulp.src(dtDir + 'bootstrap/3/dataTables.bootstrap.js')
         .pipe(gulp.dest('resources/assets/js/'));
 
+    gulp.src('vendor/bower_dl/flexboxgrid/dist/flexboxgrid.css')
+        .pipe(rename('flexboxgrid.scss'))
+        .pipe(gulp.dest('resources/assets/sass/others/'));
+
 });
 
 elixir(function(mix) {
@@ -62,5 +66,6 @@ elixir(function(mix) {
         'public/assets/js/admin.js',
         'resources/assets'
     );
-    mix.sass('app.scss', 'public/assets/css/admin.css');
+    mix.sass('admin.scss', 'public/assets/css/admin.css');
+    mix.sass('landing.scss', 'public/assets/css/landing.css');
 });

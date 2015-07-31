@@ -13,6 +13,7 @@
     "jquery": "~2.1.4",
     "fontawesome": "~4.3.0",
     "datatables": "~1.10.7",
-    "datatables-plugins": "~1.10.7"
+    "datatables-plugins": "~1.10.7",
+    "flexboxgrid": "~6.2.0"
   }
 }
