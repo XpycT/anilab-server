@@ -41,17 +41,17 @@
 
             <div class="col-xs-2">
                 <div class="box">
-                    <a href="#"><img src="/assets/images/icon_yandex.png" alt="Яндекс.Store"></a>
+                    <a href="http://anilab.web-zone.com.ua/update/file"><img src="/assets/images/icon_yandex.png" alt="Яндекс.Store"></a>
                 </div>
             </div>
             <div class="col-xs-2">
                 <div class="box">
-                    <a href="#"><img src="/assets/images/icon_gplay.png" alt="Google Play"></a>
+                    <a href="https://play.google.com/store/apps/details?id=com.xpyct.apps.anilab"><img src="/assets/images/icon_gplay.png" alt="Google Play"></a>
                 </div>
             </div>
             <div class="col-xs-2">
                 <div class="box">
-                    <a href="#"><img src="/assets/images/icon_4pda.png" alt="4pda"></a>
+                    <a href="http://4pda.ru/forum/index.php?showtopic=681235"><img src="/assets/images/icon_4pda.png" alt="4pda"></a>
                 </div>
             </div>
         </div>
