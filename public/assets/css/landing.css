@@ -769,7 +769,8 @@ body {
 .container {
   text-align: center;
   display: table-cell;
-  vertical-align: middle; }
+  vertical-align: middle;
+  overflow: hidden; }
 
 .content {
   text-align: center;
