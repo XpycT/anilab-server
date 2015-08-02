@@ -7,7 +7,7 @@
 
     <title>{{ config('api.title') }}</title>
 
-    <link href="/assets/css/admin.css" rel="stylesheet">
+    <link href="/assets/css/admin.css?v1" rel="stylesheet">
     @yield('styles')
 
   <!--[if lt IE 9]>
@@ -37,7 +37,7 @@
 
 @yield('content')
 
-<script src="/assets/js/admin.js"></script>
+<script src="/assets/js/admin.js?v1"></script>
 
 @yield('scripts')
 
