@@ -27,7 +27,7 @@
     <meta name="msapplication-wide310x150logo" content="./mstile-310x150.png" />
     <meta name="msapplication-square310x310logo" content="./mstile-310x310.png" />
     <title>{{ config('api.title') }}</title>
-    <link href="/assets/css/landing.css" rel="stylesheet">
+
     @yield('styles')
     <!--[if lt IE 9]>
     <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
@@ -61,7 +61,7 @@
 </div>
 
 @yield('content')
-
+<link href="/assets/css/landing.css" rel="stylesheet">
 @yield('scripts')
 
 <script>
