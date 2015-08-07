@@ -28,7 +28,7 @@ class Parser
             $service_name = 'sibnet';
         } else if (strrpos($original_link, "kivvi.kz") !== false || strrpos($original_link, "kiwi.kz") !== false) {
             $service_name = 'kivvi';
-        } else if (strrpos($original_link, "myvi.ru") !== false) {
+        } else if (strrpos($original_link, "myvi.ru") !== false || strrpos($original_link, "myvi.tv") !== false) {
             $service_name = 'myvi';
         } else if (strrpos($original_link, "rutube.ru") !== false) {
             $service_name = 'rutube';
@@ -52,6 +52,18 @@ class Parser
         $download_link = '';
         switch (Parser::getVideoService($original_link)) {
             case 'myvi':
+                //TODO можно сделать! .... http://myvi.ru/player/embed/html/o234L90Q3B_isAKmDzm9K3u9fM4KlFjmSR9v9ep5PCyYIBzb3DA63fWcfLCGYBlqv0
+                $tmp_link = str_replace('.tv','.ru',$original_link);
+                $tmp_link = str_replace('/embed/html/','/player/api/Video/Get/',$tmp_link);
+                $tmp_link = str_replace('/player/flash/','/player/api/Video/Get/',$tmp_link);
+                $tmp_link = $tmp_link.'?sig=1';
+                $client = new Client();
+                //get page with player
+                $response = $client->get($tmp_link);
+                $json = $response->getBody();
+                $jsonResponse = json_decode($response->getBody(true));
+                $download_link = $jsonResponse->sprutoData->playlist[0]->video[0]->url;
+                break;
             case 'rutube':
                 $download_link = false;
                 break;
@@ -162,10 +174,12 @@ class Parser
                 break;
 
             case 'sibnet':
-                $download_link = Cache::remember($original_link, env('PAGE_CACHE_MIN'), function () use ($original_link) {
+                // need http://video.sibnet.ru/video1844166 || http://video.sibnet.ru/shell.swf?videoid=1086484
+                $fix_url = str_replace('shell.swf?videoid=','video',$original_link);
+                $download_link = Cache::remember($fix_url, env('PAGE_CACHE_MIN'), function () use ($fix_url) {
                     try {
                         $client = new Client();
-                        $response = $client->get($original_link);
+                        $response = $client->get($fix_url);
                         $body = $response->getBody(true);
                         preg_match("/'file' : '(.*)m3u8',/iU", $body, $output_html);
                         $download_link = (isset($output_html[1])) ? 'http://video.sibnet.ru' . $output_html[1] . 'mp4' : false;
