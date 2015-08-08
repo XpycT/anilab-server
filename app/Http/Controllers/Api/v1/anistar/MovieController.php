@@ -64,19 +64,19 @@ class MovieController extends Controller
         // parse html
 
         foreach ($html->find('#dle-content .news') as $element) {
-            if($element->find('a[href^="/filter/year/"]', 0)){
+            if ($element->find('a[href^="/filter/year/"]', 0)) {
                 // get id from title link
                 $idArray = mb_split('/', $element->find('.news_header .title_left > a', 0)->href);
                 $id = mb_split('-', end($idArray))[0];
 
                 $title = $element->find('.news_header .title_left > a', 0)->plaintext;
-                $date = ($element->find('.date-icon', 0))?$element->find('.date-icon', 0)->plaintext:'';
+                $date = ($element->find('.date-icon', 0)) ? $element->find('.date-icon', 0)->plaintext : '';
                 //comment count
                 $comment_count = 0;
 
-                $url = URL::to('/').'/api/v1/anistar/image?image=';
-                $image_small = $url.$element->find('.news_avatar img', 0)->src;
-                $image_original = str_replace('/thumb/','/',$image_small);
+                $url = URL::to('/') . '/api/v1/anistar/image?image=';
+                $image_small = $url . $element->find('.news_avatar img', 0)->src;
+                $image_original = str_replace('/thumb/', '/', $image_small);
 
                 $description = $element->find('div.descripts', 0)->plaintext;
 
@@ -205,8 +205,8 @@ class MovieController extends Controller
         //files
         $grouped_files = array();
 
-        if($html->find('.video_as iframe',0)){
-            $frame_url = $html->find('.video_as iframe',0)->src;
+        if ($html->find('.video_as iframe', 0)) {
+            $frame_url = $html->find('.video_as iframe', 0)->src;
             $frameResponse = $this->getVideoIframe($frame_url);
             $html_frame = new Htmldom($frameResponse);
             $files = array();
@@ -253,15 +253,13 @@ class MovieController extends Controller
     public function image()
     {
         $image = Request::input('image');
-        //return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($movieId) {
-            $client = new Client(array(
-                'base_uri' => env('BASE_URL_ANISTAR')
-            ));
-            $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
-            $response = $client->get($image,['cookies' => $jar]);
-            unset($client);
-            return response($response->getBody(true),200,['Content-Type'=>'image/jpeg']);
-        //});
+        $client = new Client(array(
+            'base_uri' => env('BASE_URL_ANISTAR')
+        ));
+        $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
+        $response = $client->get($image, ['cookies' => $jar]);
+        unset($client);
+        return response($response->getBody(true), 200, ['Content-Type' => 'image/jpeg']);
     }
 
 
@@ -277,22 +275,34 @@ class MovieController extends Controller
     {
 
         return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page, $path) {
+        $pos = strpos($path, 'year');
+        if ($pos === false) {
             $url = '/anime' . (isset($path) ? urldecode($path) . 'page/' . $page . '/' : '/page/' . $page . '/');
             if ($page == 1) {
-                $url = '/anime/';
-                if(isset($path)){
-                    $url = '/anime'.urldecode($path);
+                if ($pos === false) {
+                    $url = '/anime/';
+                    if (isset($path)) {
+                        $url = '/anime' . urldecode($path);
+                    }
+                } else {
+                    $url = urldecode($path);
                 }
             }
-            $client = new Client(array(
-                'base_uri' => env('BASE_URL_ANISTAR')
-            ));
+        }else{
+            $url = urldecode($path) . 'page/' . $page . '/';
+            if ($page == 1) {
+                $url = urldecode($path);
+            }
+        }
+        $client = new Client(array(
+            'base_uri' => env('BASE_URL_ANISTAR')
+        ));
 
-            $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
-            $response = $client->get($url, ['cookies' => $jar]);
-            $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'windows-1251');
-            unset($client);
-            return $responseUtf8;
+        $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
+        $response = $client->get($url, ['cookies' => $jar]);
+        $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'windows-1251');
+        unset($client);
+        return $responseUtf8;
         });
     }
 
@@ -343,7 +353,7 @@ class MovieController extends Controller
                 'base_uri' => env('BASE_URL_ANISTAR')
             ));
             $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
-            $response = $client->get('/index.php?newsid=' . $movieId,['cookies' => $jar]);
+            $response = $client->get('/index.php?newsid=' . $movieId, ['cookies' => $jar]);
             $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
             unset($client);
             return $responseUtf8;
@@ -356,7 +366,7 @@ class MovieController extends Controller
             'base_uri' => env('BASE_URL_ANISTAR')
         ));
         $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
-        $response = $client->get($url,['cookies' => $jar]);
+        $response = $client->get($url, ['cookies' => $jar]);
         $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
         unset($client);
         return $responseUtf8;
