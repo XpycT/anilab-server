@@ -13,6 +13,7 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
 use Request;
 use Underscore\Types\Arrays;
+use URL;
 use Yangqi\Htmldom\Htmldom;
 
 class MovieController extends Controller
@@ -73,8 +74,9 @@ class MovieController extends Controller
                 //comment count
                 $comment_count = 0;
 
-                $image_small = env('BASE_URL_ANISTAR').$element->find('.news_avatar img', 0)->src;
-                $image_original = $image_small;
+                $url = URL::to('/').'/api/v1/anistar/image?image=';
+                $image_small = $url.$element->find('.news_avatar img', 0)->src;
+                $image_original = str_replace('/thumb/','/',$image_small);
 
                 $description = $element->find('div.descripts', 0)->plaintext;
 
@@ -246,6 +248,20 @@ class MovieController extends Controller
             'count' => $movie->info->comments->count,
             'list' => $comments,
         ), 200);
+    }
+
+    public function image()
+    {
+        $image = Request::input('image');
+        //return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($movieId) {
+            $client = new Client(array(
+                'base_uri' => env('BASE_URL_ANISTAR')
+            ));
+            $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
+            $response = $client->get($image,['cookies' => $jar]);
+            unset($client);
+            return response($response->getBody(true),200,['Content-Type'=>'image/jpeg']);
+        //});
     }
 
 
