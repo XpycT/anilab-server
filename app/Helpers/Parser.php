@@ -52,10 +52,16 @@ class Parser
         $download_link = '';
         switch (Parser::getVideoService($original_link)) {
             case 'myvi':
-                //TODO можно сделать! .... http://myvi.ru/player/embed/html/o234L90Q3B_isAKmDzm9K3u9fM4KlFjmSR9v9ep5PCyYIBzb3DA63fWcfLCGYBlqv0
+                //TODO можно сделать! ....
+                // http://myvi.ru/player/embed/html/o234L90Q3B_isAKmDzm9K3u9fM4KlFjmSR9v9ep5PCyYIBzb3DA63fWcfLCGYBlqv0
+                // http://myvi.ru/ru/flash/player/pre/ortLkmoLoXbrpAZca9OyMgvpB7XBC4L-YCoqPldXUWJEVRRHGSb2JhoZP4Ta_NE1l0
+                $tmp_link = str_replace('.tv','.ru',$original_link);
                 $tmp_link = str_replace('.tv','.ru',$original_link);
                 $tmp_link = str_replace('/embed/html/','/player/api/Video/Get/',$tmp_link);
                 $tmp_link = str_replace('/player/flash/','/player/api/Video/Get/',$tmp_link);
+                $tmp_link = str_replace('/ru/flash/player/pre/','/player/api/Video/Get/',$tmp_link);
+                $tmp_link = str_replace('/ru/','/',$tmp_link);
+                $tmp_link = str_replace('/player/player/','/player/',$tmp_link);
                 $tmp_link = $tmp_link.'?sig=1';
                 $client = new Client();
                 //get page with player
