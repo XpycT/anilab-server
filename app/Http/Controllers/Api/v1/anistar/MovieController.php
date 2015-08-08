@@ -17,7 +17,10 @@ use Yangqi\Htmldom\Htmldom;
 
 class MovieController extends Controller
 {
-    const protection_key = '441c2c6310c27452cf6947cfc51709e8';
+    //test
+    //const protection_key = '441c2c6310c27452cf6947cfc51709e8';
+    //live
+    const protection_key = '6a4a23c9d5d96ef39504827537966d12';
 
     /**
      * Display a listing of the resource.
@@ -258,22 +261,22 @@ class MovieController extends Controller
     {
 
         return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page, $path) {
-        $url = '/anime' . (isset($path) ? urldecode($path) . 'page/' . $page . '/' : '/page/' . $page . '/');
-        if ($page == 1) {
-            $url = '/anime/';
-            if(isset($path)){
-                $url = '/anime'.urldecode($path);
+            $url = '/anime' . (isset($path) ? urldecode($path) . 'page/' . $page . '/' : '/page/' . $page . '/');
+            if ($page == 1) {
+                $url = '/anime/';
+                if(isset($path)){
+                    $url = '/anime'.urldecode($path);
+                }
             }
-        }
-        $client = new Client(array(
-            'base_uri' => env('BASE_URL_ANISTAR')
-        ));
+            $client = new Client(array(
+                'base_uri' => env('BASE_URL_ANISTAR')
+            ));
 
-        $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
-        $response = $client->get($url, ['cookies' => $jar]);
-        $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'windows-1251');
-        unset($client);
-        return $responseUtf8;
+            $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
+            $response = $client->get($url, ['cookies' => $jar]);
+            $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'windows-1251');
+            unset($client);
+            return $responseUtf8;
         });
     }
 
@@ -333,14 +336,14 @@ class MovieController extends Controller
 
     private function getVideoIframe($url)
     {
-            $client = new Client(array(
-                'base_uri' => env('BASE_URL_ANISTAR')
-            ));
-            $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
-            $response = $client->get($url,['cookies' => $jar]);
-            $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
-            unset($client);
-            return $responseUtf8;
+        $client = new Client(array(
+            'base_uri' => env('BASE_URL_ANISTAR')
+        ));
+        $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
+        $response = $client->get($url,['cookies' => $jar]);
+        $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
+        unset($client);
+        return $responseUtf8;
     }
 
 }
