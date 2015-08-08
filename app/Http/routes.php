@@ -35,10 +35,9 @@ Route::group(array('prefix' => 'api/v1','middleware' => 'api'), function () {
         Route::get('show/{movieId}', 'Api\v1\anistar\MovieController@show')->where('movieId', '[0-9]+');
         Route::get('show/{movieId}/comments', 'Api\v1\anistar\MovieController@comments')->where('movieId', '[0-9]+');
         Route::get('show/{movieId}/files', 'Api\v1\anistar\MovieController@files')->where('movieId', '[0-9]+');
-        Route::get('image', 'Api\v1\anistar\MovieController@image');
     });
 });
-
+Route::get('api/v1/anistar/image', 'Api\v1\anistar\MovieController@image');
 // Admin area
 Route::get('admin', function () {
     return redirect('admin/token');
