@@ -56,21 +56,23 @@ class Parser
                 //TODO можно сделать! ....
                 // http://myvi.ru/player/embed/html/o234L90Q3B_isAKmDzm9K3u9fM4KlFjmSR9v9ep5PCyYIBzb3DA63fWcfLCGYBlqv0
                 // http://myvi.ru/ru/flash/player/pre/ortLkmoLoXbrpAZca9OyMgvpB7XBC4L-YCoqPldXUWJEVRRHGSb2JhoZP4Ta_NE1l0
-                /*$tmp_link = str_replace('.tv','.ru',$original_link);
+                $tmp_link = str_replace('.tv','.ru',$original_link);
                 $tmp_link = str_replace('.tv','.ru',$original_link);
                 $tmp_link = str_replace('/embed/html/','/player/api/Video/Get/',$tmp_link);
                 $tmp_link = str_replace('/player/flash/','/player/api/Video/Get/',$tmp_link);
                 $tmp_link = str_replace('/ru/flash/player/pre/','/player/api/Video/Get/',$tmp_link);
                 $tmp_link = str_replace('/ru/','/',$tmp_link);
                 $tmp_link = str_replace('/player/player/','/player/',$tmp_link);
-                $tmp_link = $tmp_link.'?sig=1';
-                $client = new Client();
+                $tmp_link = str_replace('//','http://',$tmp_link);
+                $tmp_link = str_replace('http:http','http',$tmp_link);
+                //$tmp_link = $tmp_link.'?sig=1';
+                /*$client = new Client();
                 //get page with player
                 $response = $client->get($tmp_link);
                 $json = $response->getBody();
                 $jsonResponse = json_decode($response->getBody(true));
                 $download_link = $jsonResponse->sprutoData->playlist[0]->video[0]->url;*/
-                $download_link = $original_link;
+                $download_link = $tmp_link;
                 break;
             case 'rutube':
                 $download_link = "";
