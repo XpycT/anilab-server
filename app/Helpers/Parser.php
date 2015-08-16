@@ -6,6 +6,7 @@ namespace app\Helpers;
 use Cache;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use SimpleXMLElement;
 use Yangqi\Htmldom\Htmldom;
 
 class Parser
@@ -72,7 +73,23 @@ class Parser
                 $download_link = $original_link;
                 break;
             case 'rutube':
-                $download_link = $original_link;
+                $download_link = "";
+                $tmp_link = str_replace('//rutube.ru/play/embed/','',$original_link);
+                $tmp_link = str_replace('http:','',$tmp_link);
+                $tmp_link = str_replace('//video.rutube.ru/','',$tmp_link);
+                // https://rutube.ru/api/play/trackinfo/7888798/?sqr4374_compat=1
+                $download_link_page = sprintf('https://rutube.ru/api/play/trackinfo/%s/?sqr4374_compat=1', $tmp_link);
+                try {
+                    $client = new Client();
+                    $response = $client->get($download_link_page);
+                    $str = json_decode($response->getBody(true));
+                    $download_link = $str->video_url;
+                } catch (ClientException $e) {
+                    $response = $e->getResponse();
+                    if ($response->getStatusCode() == 404) {
+                        $download_link = "";
+                    }
+                }
                 break;
             case 'anidub':
                 $download_link = Cache::remember(md5($original_link), env('PAGE_CACHE_MIN'), function () use ($original_link) {
