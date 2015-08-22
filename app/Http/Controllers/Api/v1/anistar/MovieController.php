@@ -260,8 +260,18 @@ class MovieController extends Controller
         ));
         $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
         $response = $client->get($image, ['cookies' => $jar,'headers'=> ['User-Agent' => config('api.userAgent')]]);
+        try {
+            $response = $client->get($image, ['cookies' => $jar,'headers'=> ['User-Agent' => config('api.userAgent')]]);
+            $responseUtf8 = response($response->getBody(true), 200, ['Content-Type' => 'image/jpeg']);
+        }
+        catch (ServerException $e) {
+            if ($e->hasResponse()) {
+                $m = $e->getResponse();
+                $responseUtf8 = response($m->getBody(true), 200, ['Content-Type' => 'image/jpeg']);
+            }
+        }
         unset($client);
-        return response($response->getBody(true), 200, ['Content-Type' => 'image/jpeg']);
+        return $responseUtf8;
     }
 
 
@@ -275,7 +285,7 @@ class MovieController extends Controller
      */
     private function getCachedPage($cache_key, $page, $path)
     {
-        //return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page, $path) {
+        return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page, $path) {
         $pos = strpos($path, 'year');
         if ($pos === false) {
             $url = '/anime' . (isset($path) ? urldecode($path) . 'page/' . $page . '/' : '/page/' . $page . '/');
@@ -313,7 +323,7 @@ class MovieController extends Controller
         }
         unset($client);
         return $responseUtf8;
-        //});
+        });
     }
 
     /**
@@ -332,19 +342,28 @@ class MovieController extends Controller
             ));
             $result_from = ((int)$page * 10 - 10) + 1;
             $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
-            $response = $client->post("/index.php?do=search", [
-                'form_params' => [
-                    'do' => 'search',
-                    'subaction' => 'search',
-                    'full_search' => 0,
-                    'search_start' => $page,
-                    'result_from' => ($page == 1) ? 1 : $result_from,
-                    'story' => mb_convert_encoding($search_query, 'cp1251', 'utf-8')
-                ],
-                'cookies' => $jar,
-                'headers'=> ['User-Agent' => config('api.userAgent')]
-            ]);
-            $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'windows-1251');
+
+            try {
+                $response = $client->post("/index.php?do=search", [
+                    'form_params' => [
+                        'do' => 'search',
+                        'subaction' => 'search',
+                        'full_search' => 0,
+                        'search_start' => $page,
+                        'result_from' => ($page == 1) ? 1 : $result_from,
+                        'story' => mb_convert_encoding($search_query, 'cp1251', 'utf-8')
+                    ],
+                    'cookies' => $jar,
+                    'headers'=> ['User-Agent' => config('api.userAgent')]
+                ]);
+                $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'windows-1251');
+            }
+            catch (ServerException $e) {
+                if ($e->hasResponse()) {
+                    $m = $e->getResponse();
+                    $responseUtf8 = mb_convert_encoding($m->getBody(true), 'utf-8', 'windows-1251');
+                }
+            }
             unset($client);
             return $responseUtf8;
         });
@@ -364,8 +383,16 @@ class MovieController extends Controller
                 'base_uri' => env('BASE_URL_ANISTAR')
             ));
             $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
-            $response = $client->get('/index.php?newsid=' . $movieId, ['cookies' => $jar,'headers'=> ['User-Agent' => config('api.userAgent')]]);
-            $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
+            try {
+                $response = $client->get('/index.php?newsid=' . $movieId, ['cookies' => $jar,'headers'=> ['User-Agent' => config('api.userAgent')]]);
+                $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
+            }
+            catch (ServerException $e) {
+                if ($e->hasResponse()) {
+                    $m = $e->getResponse();
+                    $responseUtf8 = mb_convert_encoding($m->getBody(true), 'utf-8', 'windows-1251');
+                }
+            }
             unset($client);
             return $responseUtf8;
         });
@@ -378,8 +405,17 @@ class MovieController extends Controller
         ));
 
         $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
-        $response = $client->get($url, ['cookies' => $jar,'headers'=> ['User-Agent' => config('api.userAgent')]]);
-        $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
+        try {
+            $response = $client->get($url, ['cookies' => $jar,'headers'=> ['User-Agent' => config('api.userAgent')]]);
+            $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
+        }
+        catch (ServerException $e) {
+            if ($e->hasResponse()) {
+                $m = $e->getResponse();
+                $responseUtf8 = mb_convert_encoding($m->getBody(true), 'utf-8', 'windows-1251');
+            }
+        }
+
         unset($client);
         return $responseUtf8;
     }
