@@ -11,6 +11,7 @@ use Cache;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ServerException;
 use Request;
 use Underscore\Types\Arrays;
 use URL;
@@ -60,6 +61,7 @@ class MovieController extends Controller
                 ), 200);
             }
         }
+
         $html = new Htmldom($cachedHtml);
         // parse html
 
@@ -257,7 +259,7 @@ class MovieController extends Controller
             'base_uri' => env('BASE_URL_ANISTAR')
         ));
         $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
-        $response = $client->get($image, ['cookies' => $jar]);
+        $response = $client->get($image, ['cookies' => $jar,'headers'=> ['User-Agent' => config('api.userAgent')]]);
         unset($client);
         return response($response->getBody(true), 200, ['Content-Type' => 'image/jpeg']);
     }
@@ -273,8 +275,7 @@ class MovieController extends Controller
      */
     private function getCachedPage($cache_key, $page, $path)
     {
-
-        return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page, $path) {
+        //return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page, $path) {
         $pos = strpos($path, 'year');
         if ($pos === false) {
             $url = '/anime' . (isset($path) ? urldecode($path) . 'page/' . $page . '/' : '/page/' . $page . '/');
@@ -294,16 +295,25 @@ class MovieController extends Controller
                 $url = urldecode($path);
             }
         }
+
         $client = new Client(array(
             'base_uri' => env('BASE_URL_ANISTAR')
         ));
-
         $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
-        $response = $client->get($url, ['cookies' => $jar]);
-        $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'windows-1251');
+
+        try {
+            $response = $client->get($url, ['cookies' => $jar,'headers'=> ['User-Agent' => config('api.userAgent')]]);
+            $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'windows-1251');
+        }
+        catch (ServerException $e) {
+            if ($e->hasResponse()) {
+                $m = $e->getResponse();
+                $responseUtf8 = mb_convert_encoding($m->getBody(true), 'utf-8', 'windows-1251');
+            }
+        }
         unset($client);
         return $responseUtf8;
-        });
+        //});
     }
 
     /**
@@ -331,7 +341,8 @@ class MovieController extends Controller
                     'result_from' => ($page == 1) ? 1 : $result_from,
                     'story' => mb_convert_encoding($search_query, 'cp1251', 'utf-8')
                 ],
-                'cookies' => $jar
+                'cookies' => $jar,
+                'headers'=> ['User-Agent' => config('api.userAgent')]
             ]);
             $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'windows-1251');
             unset($client);
@@ -353,7 +364,7 @@ class MovieController extends Controller
                 'base_uri' => env('BASE_URL_ANISTAR')
             ));
             $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
-            $response = $client->get('/index.php?newsid=' . $movieId, ['cookies' => $jar]);
+            $response = $client->get('/index.php?newsid=' . $movieId, ['cookies' => $jar,'headers'=> ['User-Agent' => config('api.userAgent')]]);
             $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
             unset($client);
             return $responseUtf8;
@@ -365,8 +376,9 @@ class MovieController extends Controller
         $client = new Client(array(
             'base_uri' => env('BASE_URL_ANISTAR')
         ));
+
         $jar = CookieJar::fromArray(['blazingfast-layer7-protection' => self::protection_key], 'anistar.ru');
-        $response = $client->get($url, ['cookies' => $jar]);
+        $response = $client->get($url, ['cookies' => $jar,'headers'=> ['User-Agent' => config('api.userAgent')]]);
         $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
         unset($client);
         return $responseUtf8;
