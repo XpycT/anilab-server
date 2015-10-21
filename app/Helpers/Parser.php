@@ -122,7 +122,7 @@ class Parser
                     preg_match("/video_token: '(.*)'/iU", $html, $token_array);
                     if (isset($token_array[1])) {
                         preg_match("/access_key: '(.*)'/iU", $html, $access_array);
-                        preg_match("/d_id: '(.*)'/iU", $html, $did_array);
+                        preg_match("/d_id: (.*)/iU", $html, $did_array);
                         preg_match("/'X-MOON-EXPIRED', \"(.*)\"/iU", $html, $xme_array);
                         preg_match("/'X-MOON-TOKEN', \"(.*)\"/iU", $html, $xmt_array);
                         if (isset($access_array[1])) {
