@@ -112,9 +112,9 @@ class Parser
             case 'moonwalk':
                 // fix link
                 $link = explode('|', $original_link)[0];
-                $download_link = str_replace('iframe', 'index.m3u8?cd=1', $link);
+                //$download_link = str_replace('iframe', 'index.m3u8?cd=1', $link);
 
-                /*$download_link = Cache::remember(md5($link), env('PAGE_CACHE_MIN'), function () use ($link) {
+                $download_link = Cache::remember(md5($link), env('PAGE_CACHE_MIN'), function () use ($link) {
                     $client = new Client();
                     //get page with player
                     $response = $client->get($link);
@@ -122,13 +122,20 @@ class Parser
                     preg_match("/video_token: '(.*)'/iU", $html, $token_array);
                     if (isset($token_array[1])) {
                         preg_match("/access_key: '(.*)'/iU", $html, $access_array);
+                        preg_match("/d_id: '(.*)'/iU", $html, $did_array);
+                        preg_match("/'X-MOON-EXPIRED', \"(.*)\"/iU", $html, $xme_array);
+                        preg_match("/'X-MOON-TOKEN', \"(.*)\"/iU", $html, $xmt_array);
                         if (isset($access_array[1])) {
                             $response = $client->post('http://moonwalk.cc/sessions/create_session', [
                                 'form_params' => [
                                     'video_token' => $token_array[1],
                                     'access_key' => $access_array[1],
-                                    'cd' => 1
-                                ]]);
+                                    'cd' => 0,
+                                    'd_id'=> $did_array[1],
+                                    'content_type'=> 'movie',
+                                ],
+                                'headers'=> ['X-MOON-EXPIRED' => $xme_array[1],'X-MOON-TOKEN' => $xmt_array[1],'X-Requested-With' => 'XMLHttpRequest']
+                            ]);
                             $jsonResponse = json_decode($response->getBody(true));
                             return $jsonResponse->manifest_m3u8;
                         }
@@ -137,7 +144,7 @@ class Parser
                     }
                     $html->clear();
                     unset($html);
-                });*/
+                });
 
                 break;
             case 'kivvi':
