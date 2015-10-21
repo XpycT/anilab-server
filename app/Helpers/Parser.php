@@ -99,7 +99,7 @@ class Parser
                     //get page with player
                     $response = $client->get($original_link);
                     $html = new Htmldom($response->getBody(true));
-                    preg_match("/file: '(.*.m3u8)',/iU", $html, $m3u8_array);
+                    preg_match("/file: '(.*.m3u8.*)',/iU", $html, $m3u8_array);
                     if (isset($m3u8_array[1])) {
                         return $m3u8_array[1];
                     } else {
