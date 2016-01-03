@@ -122,19 +122,28 @@ class Parser
                     preg_match("/video_token: '(.*)'/iU", $html, $token_array);
                     if (isset($token_array[1])) {
                         preg_match("/access_key: '(.*)'/iU", $html, $access_array);
-                        preg_match("/d_id: (.*)/iU", $html, $did_array);
-                        preg_match("/'X-MOON-EXPIRED', \"(.*)\"/iU", $html, $xme_array);
-                        preg_match("/'X-MOON-TOKEN', \"(.*)\"/iU", $html, $xmt_array);
+                        preg_match("/d_id: (.*),/iU", $html, $did_array);
+                        /*preg_match("/'X-MOON-EXPIRED', \"(.*)\"/iU", $html, $xme_array);
+                        preg_match("/'X-MOON-TOKEN', \"(.*)\"/iU", $html, $xmt_array);*/
+                        preg_match("/setRequestHeader\\|([^\\|]*)/i", $html, $contentData_array);
+                        preg_match("/<meta name=\"csrf-token\" content=\"(.*)\"/iU", $html, $csrf_array);
                         if (isset($access_array[1])) {
                             $response = $client->post('http://moonwalk.cc/sessions/create_session', [
                                 'form_params' => [
+                                    'partner'=> '',
                                     'video_token' => $token_array[1],
                                     'access_key' => $access_array[1],
                                     'cd' => 0,
                                     'd_id'=> $did_array[1],
                                     'content_type'=> 'movie',
                                 ],
-                                'headers'=> ['X-MOON-EXPIRED' => $xme_array[1],'X-MOON-TOKEN' => $xmt_array[1],'X-Requested-With' => 'XMLHttpRequest']
+                                'headers'=> [/*'X-MOON-EXPIRED' => $xme_array[1],'X-MOON-TOKEN' => $xmt_array[1],*/
+                                    'X-Requested-With' => 'XMLHttpRequest',
+                                    'User-Agent' => config('api.userAgent'),
+                                    'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
+                                    'X-CSRF-Token' => $csrf_array[1],
+                                    "Content-Data" => base64_encode($contentData_array[1])
+                                ]
                             ]);
                             $jsonResponse = json_decode($response->getBody(true));
                             return $jsonResponse->manifest_m3u8;
