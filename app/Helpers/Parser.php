@@ -115,7 +115,7 @@ class Parser
                 //$download_link = str_replace('iframe', 'index.m3u8?cd=1', $link);
 
                 //$download_link = Cache::remember(md5($link), env('PAGE_CACHE_MIN'), function () use ($link) {
-                    $client = new Client();
+                    $client = new Client(['verify' => false]);
                     //get page with player
                     $response = $client->get($link);
                     $html = new Htmldom($response->getBody(true));
