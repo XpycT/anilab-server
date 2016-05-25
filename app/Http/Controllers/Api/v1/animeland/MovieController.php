@@ -29,11 +29,11 @@ class MovieController extends Controller
         $path = Request::input('path');
         $search_query = Request::input('q');
 
-        $key = 'animeland_page_' . $page; // ex. animeland_page_1
+        $key = 'animeland_info_page_' . $page; // ex. animeland_page_1
         if (isset($path)) {
-            $key = 'animeland_' . str_replace('/', '_', $path) . '_page_' . $page; //ex. animeland__anime-rus_tv-rus__page_1
+            $key = 'animeland_info_' . str_replace('/', '_', $path) . '_page_' . $page; //ex. animeland__anime-rus_tv-rus__page_1
         } else if (isset($search_query)) {
-            $key = 'animeland_' . md5($search_query) . '_page_' . $page; //ex. animeland_34jhg234876sdfsjknk98_page_1
+            $key = 'animeland_info_' . md5($search_query) . '_page_' . $page; //ex. animeland_34jhg234876sdfsjknk98_page_1
         }
         $items = [];
         // get page or cache
@@ -174,7 +174,7 @@ class MovieController extends Controller
     public function show($movieId)
     {
         // get page from cache
-        $cachedHtml = $this->getCachedFullPage('animeland_show_' . $movieId, $movieId);
+        $cachedHtml = $this->getCachedFullPage('animeland_info_show_' . $movieId, $movieId);
         $html = new Htmldom($cachedHtml);
         //description
         $description = $html->find('.fullstory .maincont .s_post_info_description', 0)->plaintext;
@@ -210,7 +210,7 @@ class MovieController extends Controller
      */
     public function files($movieId){
         // get page from cache
-        $cachedHtml = $this->getCachedFullPage('animeland_show_' . $movieId, $movieId);
+        $cachedHtml = $this->getCachedFullPage('animeland_info_show_' . $movieId, $movieId);
         $html = new Htmldom($cachedHtml);
         $title = trim(mb_split('/',$html->find('h1.heading', 0)->plaintext)[0]);
         //files
@@ -274,7 +274,7 @@ class MovieController extends Controller
     {
         $comments = array();
 
-        $cachedHtml = $this->getCachedFullPage('animeland_show_' . $movieId, $movieId);
+        $cachedHtml = $this->getCachedFullPage('animeland_info_show_' . $movieId, $movieId);
         $html = new Htmldom($cachedHtml);
         // create comment url
         $latest_page = ($html->find('.basenavi .navigation a', -1) !== null) ? $html->find('.basenavi .navigation a', -1)->innertext : null;
