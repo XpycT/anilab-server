@@ -36,6 +36,8 @@ Route::group(array('prefix' => 'api/v1','middleware' => 'api'), function () {
         Route::get('show/{movieId}/comments', 'Api\v1\anistar\MovieController@comments')->where('movieId', '[0-9]+');
         Route::get('show/{movieId}/files', 'Api\v1\anistar\MovieController@files')->where('movieId', '[0-9]+');
     });
+
+    Route::post('parse', 'Api\v1\CommonController@parseLink');
 });
 Route::get('api/v1/anistar/image', 'Api\v1\anistar\MovieController@image');
 // Admin area

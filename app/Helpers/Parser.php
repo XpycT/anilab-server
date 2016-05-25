@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Helpers;
+namespace App\Helpers;
 
 
 use Cache;
@@ -31,6 +31,8 @@ class Parser
             $service_name = 'kivvi';
         } else if (strrpos($original_link, "myvi.ru") !== false || strrpos($original_link, "myvi.tv") !== false) {
             $service_name = 'myvi';
+        } else if (strrpos($original_link, "youtube.com") !== false) {
+            $service_name = 'youtube';
         } else if (strrpos($original_link, "rutube.ru") !== false) {
             $service_name = 'rutube';
         } else if (strrpos($original_link, "moonwalk.cc") !== false) {

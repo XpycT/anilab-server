@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1\anistar;
 
-use app\Helpers;
+use App\Helpers;
 use App\Helpers\Parser;
 use App\Http\Controllers\Controller;
 use App\Http\Requests;
