@@ -394,7 +394,7 @@ class MovieController extends Controller
      */
     private function getCachedFullPage($cache_key, $movieId)
     {
-        return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($movieId) {
+        //return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($movieId) {
             $client = new Client(array(
                 'base_uri' => env('BASE_URL_ANIMELAND')
             ));
@@ -402,7 +402,7 @@ class MovieController extends Controller
             $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
             unset($client);
             return $responseUtf8;
-        });
+        //});
     }
 
 
