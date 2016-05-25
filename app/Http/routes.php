@@ -17,7 +17,7 @@ Route::get('/', function () {
 Route::get('update/info', 'Admin\UpdateController@getVersion');
 Route::get('update/file', 'Admin\UpdateController@getFile');
 
-Route::group(array('prefix' => 'api/v1'/*,'middleware' => 'api'*/), function () {
+Route::group(array('prefix' => 'api/v1','middleware' => 'api'), function () {
     Route::group(array('prefix' => 'animeland'), function () {
         Route::match(['get', 'post'], 'page/{page?}', 'Api\v1\animeland\MovieController@page')->where('page', '[0-9]+');
         Route::get('show/{movieId}', 'Api\v1\animeland\MovieController@show')->where('movieId', '[0-9]+');
