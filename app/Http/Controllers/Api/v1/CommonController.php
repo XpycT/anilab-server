@@ -16,7 +16,7 @@ class CommonController extends Controller
      */
     public function parseLink(Request $request)
     {
-        $link = $request->getContent();
+        $link = $request->input('link');
         $download_link= Helpers\Parser::createDownloadLink($link);
 
         return response()->json([
