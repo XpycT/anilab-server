@@ -247,12 +247,17 @@ class MovieController extends Controller
                     $link = sprintf('%s',$url);
                     break;
             }
+            
+            $download_link = $link;
+            if($system != 4){
+                $download_link = Parser::createDownloadLink($link);
+            }
 
             $file_item = array(
                 'service' => Parser::getVideoService($link),
                 'part' => $part_title,
                 'original_link' => $link,
-                'download_link' => Parser::createDownloadLink($link)
+                'download_link' => $download_link
             );
             array_push($files, $file_item);
         }
