@@ -217,11 +217,19 @@ class MovieController extends Controller
                 $part = mb_split('\\[', $file->innertext)[0];
                 $link = $output_file[1];
                 $part_title = $title . ' - ' . trim($part);
+
+                $download_link = $link;
+                $videoService = Parser::getVideoService($link);
+
+                if($videoService !== 'sibnet'){
+                    $download_link = Parser::createDownloadLink($link);
+                }
+
                 $file_item = array(
-                    'service' => Parser::getVideoService($link),
+                    'service' => $videoService,
                     'part' => $part_title,
                     'original_link' => $link,
-                    'download_link' => Parser::createDownloadLink($link)
+                    'download_link' => $download_link
                 );
                 array_push($files, $file_item);
             }

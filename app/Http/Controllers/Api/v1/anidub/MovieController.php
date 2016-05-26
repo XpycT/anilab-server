@@ -272,12 +272,18 @@ class MovieController extends Controller
             $link = explode('|', $link)[0];
             $link = str_replace('pp.anidub-online.ru/video_ext.php', 'vk.com/video_ext.php', $link);
 
+            $download_link = $link;
+            $videoService = Parser::getVideoService($link);
+            
+            if($videoService !== 'sibnet'){
+                $download_link = Parser::createDownloadLink($link);
+            }
 
             $file_item = array(
-                'service' => Parser::getVideoService($link),
+                'service' => $videoService,
                 'part' => $part,
                 'original_link' => $link,
-                'download_link' => Parser::createDownloadLink($link)
+                'download_link' => $download_link
             );
             array_push($files, $file_item);
         }
