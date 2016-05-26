@@ -57,7 +57,7 @@ class MovieController extends Controller
         $html = new Htmldom($cachedHtml);
         // parse html
         foreach ($html->find('#dle-content .base') as $element) {
-            if ($element->find('.bheading', 0) && $element->find('.maincont', 0)) {
+            if ($element->find('.bheading', 0) && $element->find('.maincont .s_post_info', 0)) {
                 // get id from title link
                 //$id = mb_split('-', $element->find('.ratebox > div', 0)->id)[2];
                 $idArray = mb_split('/', $element->find('span.heading a', 0)->href);
