@@ -17,7 +17,7 @@ Route::get('/', function () {
 Route::get('update/info', 'Admin\UpdateController@getVersion');
 Route::get('update/file', 'Admin\UpdateController@getFile');
 
-Route::group(array('prefix' => 'api/v1','middleware' => 'api'), function () {
+Route::group(array('prefix' => 'api/v1'/*,'middleware' => 'api'*/), function () {
     Route::group(array('prefix' => 'animeland'), function () {
         Route::match(['get', 'post'], 'page/{page?}', 'Api\v1\animeland\MovieController@page')->where('page', '[0-9]+');
         Route::get('show/{movieId}', 'Api\v1\animeland\MovieController@show')->where('movieId', '[0-9]+');
@@ -35,6 +35,12 @@ Route::group(array('prefix' => 'api/v1','middleware' => 'api'), function () {
         Route::get('show/{movieId}', 'Api\v1\anistar\MovieController@show')->where('movieId', '[0-9]+');
         Route::get('show/{movieId}/comments', 'Api\v1\anistar\MovieController@comments')->where('movieId', '[0-9]+');
         Route::get('show/{movieId}/files', 'Api\v1\anistar\MovieController@files')->where('movieId', '[0-9]+');
+    });
+    Route::group(array('prefix' => 'animespirit'), function () {
+        Route::match(['get', 'post'], 'page/{page?}', 'Api\v1\animespirit\MovieController@page')->where('page', '[0-9]+');
+        Route::get('show/{movieId}', 'Api\v1\animespirit\MovieController@show')->where('movieId', '[0-9]+');
+        Route::get('show/{movieId}/comments', 'Api\v1\animespirit\MovieController@comments')->where('movieId', '[0-9]+');
+        Route::get('show/{movieId}/files', 'Api\v1\animespirit\MovieController@files')->where('movieId', '[0-9]+');
     });
 
     Route::post('parse', 'Api\v1\CommonController@parseLink');
