@@ -286,53 +286,33 @@ class MovieController extends Controller
 
         $cachedHtml = $this->getCachedFullPage('animespirit_info_show_' . $movieId, $movieId);
         $html = new Htmldom($cachedHtml);
-        // create comment url
-        $latest_page = ($html->find('.basenavi .navigation a', -1) !== null) ? $html->find('.basenavi .navigation a', -1)->innertext : null;
-        //clear html
-        $html->clear();
-        unset($html);
 
-        //fetch all comments pages
-        $n = $latest_page ? $latest_page : 1;
-        $index = 0; // index for page count
-        for ($i = 1; $i <= $n; $i++) {
-            ++$index;
-            if ($index > config('api.comment_page_limit')) continue;
-            //http://animelend.info/engine/ajax/comments.php?cstart=2&news_id=5555&skin=animelend
-            $url = sprintf('%s/engine/ajax/comments.php?cstart=%d&news_id=%d&skin=animelend', env('BASE_URL_ANIMESPIRIT'), $i, $movieId);
 
-            $response_json = Cache::remember(md5($url), env('PAGE_CACHE_MIN'), function () use ($url) {
-                $client = new Client();
-                $response = $client->get($url);
-                $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
-                $response_json = json_decode($responseUtf8, true);
-                return $response_json;
-            });
-            //parse comment page
-            $html = new Htmldom($response_json['comments']);
-            foreach ($html->find('div[id^=comment-id]') as $comment_item) {
-                $tmpId = explode('-', $comment_item->id);
+        //fetch first comments page
+        foreach ($html->find('table[width=100%]') as $comment_item) {
+            if($comment_item->find('div[id^=comm-id]',0) && $comment_item->find('td.slink', 0)){
+
+                $tmpId = explode('-', $comment_item->find('div[id^=comm-id]',0)->id);
                 $commentId = array_pop($tmpId);
 
                 $body_text = $comment_item->find('div[id^=comm-id]', 0)->plaintext;
                 $comment = array(
                     'comment_id' => $commentId,
-                    'date' => $comment_item->find('.comhead ul>li.first', 0)->plaintext,
-                    'author' => $comment_item->find('h3 a', 0)->plaintext,
+                    'date' => trim(mb_split('\|', $comment_item->find('td.slink', 0)->plaintext)[0]),
+                    'author' => '%UserName%',//$comment_item->parent()->find('a[onclick^="return dropdownmenu(this, event, UserMenu("', 0)->plaintext,
                     'body' => trim($body_text),
-                    'avatar' => $comment_item->find(".avatarbox > img", 0)->src
+                    'avatar' => $comment_item->find('img[src^="http://images.animespirit.ru/uploads/fotos/"]', 0)->src
                 );
                 array_push($comments, $comment);
             }
+
         }
 
         //get movie from db
         $movie = Movie::firstOrCreate(['movie_id' => $movieId]);
-        /*$info = is_object($movie->info) ? $movie->info : new \stdClass();
-        $info->comments = isset($info->comments) ? $info->comments : new \stdClass();
-        $info->comments->list = $comments;
-        $movie->info = $info;
-        $movie->save();*/
+        //clear html
+        $html->clear();
+        unset($html);
 
         return response()->json(array(
             'status' => 'success',
