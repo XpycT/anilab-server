@@ -68,15 +68,10 @@ class MovieController extends Controller
 
                 $title = $element->find('.content-block-title a', 0)->plaintext;
 
-                $descrDom = new Htmldom($element->find("table tr:eq(1) div#news-id-{$id}", 0)->outertext);
-                $descrDom->find("div#news-id-{$id} div", 1)->outertext = '';
-                $descrDom->find("div#news-id-{$id} div", 1)->innertext = '';
-                $descrDom->save();
-                
-                $description = $descrDom->plaintext;
+                $description = $element->find("table tr:eq(1) div#news-id-{$id}", 0)->plaintext;
 
                 $date = mb_split('\|', $element->find('table tr:eq(0) td', 0)->plaintext);
-                $date = (count($date) > 2)?trim($date[1]):'';
+                $date = (count($date) > 2) ? trim($date[1]) : '';
 
                 $image_small = $image_original = '';
                 if ($element->find('a[onclick^="return hs.expand(this"]', 0)) {
@@ -176,15 +171,25 @@ class MovieController extends Controller
         $cachedHtml = $this->getCachedFullPage('animespirit_info_show_' . $movieId, $movieId);
         $html = new Htmldom($cachedHtml);
         //description
-        $description = $html->find('.fullstory .maincont .s_post_info_description', 0)->plaintext;
-        $description = str_replace('Описание:', '', $description);
-        $description = str_replace('Справка', '', $description);
+        $description = $html->find('#dle-content .content-block table tr:eq(1)', 0)->innertext;
+
+        preg_match("/<b>Описание:<\\/b>(.*)<div/iU", $description, $output_description);
+
+        $description = (count($output_description) > 1) ? strip_tags($output_description[1]) : $description;
         //screenshots
         $screenshots = array();
+        foreach ($html->find('fieldset a[onclick^="return hs.expand(this"]') as $screen) {
+            $screen_item = array(
+                'thumbnail' => $screen->find('img', 0)->src,
+                'original' => $screen->href
+            );
+            array_push($screenshots, $screen_item);
+        }
+
 
         //load movie from db
         $movie = Movie::firstOrCreate(['movie_id' => $movieId]);
-        $movie->title = trim($html->find('.fullstory h1.heading', 0)->plaintext);
+        $movie->title = trim($html->find('.content-block-title h2 a', 0)->plaintext);
         $movie->description = trim(nl2br($description));
 
         $info = is_object($movie->info) ? $movie->info : new \stdClass();
@@ -353,7 +358,7 @@ class MovieController extends Controller
             'base_uri' => env('BASE_URL_ANIMESPIRIT')
         ));
         $jar = CookieJar::fromArray(['__DDOS_COOKIE' => self::protection_key], 'www.animespirit.ru');
-        $response = $client->get($url, ['cookies' => $jar,'headers'=> ['User-Agent' => config('api.userAgent')]]);
+        $response = $client->get($url, ['cookies' => $jar, 'headers' => ['User-Agent' => config('api.userAgent')]]);
         $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
 
         unset($client);
@@ -402,10 +407,12 @@ class MovieController extends Controller
     private function getCachedFullPage($cache_key, $movieId)
     {
         //return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($movieId) {
+        $url = '/index.php?newsid=' . $movieId;
         $client = new Client(array(
             'base_uri' => env('BASE_URL_ANIMESPIRIT')
         ));
-        $response = $client->get('/index.php?newsid=' . $movieId);
+        $jar = CookieJar::fromArray(['__DDOS_COOKIE' => self::protection_key], 'www.animespirit.ru');
+        $response = $client->get($url, ['cookies' => $jar, 'headers' => ['User-Agent' => config('api.userAgent')]]);
         $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
         unset($client);
         return $responseUtf8;
