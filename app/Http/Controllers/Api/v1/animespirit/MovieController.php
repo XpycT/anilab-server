@@ -260,7 +260,11 @@ class MovieController extends Controller
             //dd($cachedHtml);
             foreach ($html->find('h3[id^=top_div_]') as $item){
                 //$title = trim($item->plaintext);
-                $title = preg_replace('/(sibnet|myvi|youtube|vkontakte)$/iU','',trim($item->plaintext));
+
+                $title =str_replace('[/ss]','',trim($item->plaintext));
+
+                $title = preg_replace('/\[ss=.*\]/iU','',trim($title));
+                $title = preg_replace('/(sibnet|myvi|youtube|vkontakte)$/iU','',$title);
                 $id = mb_split('_', $item->id)[2];
                 $url = $html->find("p#an_ul$id",0)->plaintext;
 
