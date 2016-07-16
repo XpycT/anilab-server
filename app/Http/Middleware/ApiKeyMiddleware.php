@@ -16,6 +16,8 @@ class ApiKeyMiddleware
      */
     public function handle($request, Closure $next)
     {
+        if(getenv('APP_ENV') === 'dev') return $next($request);
+
         if(!$request->header('x-api-key')){
             return response()->json([
                 'status'=>'Unauthorized'
