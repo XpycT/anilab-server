@@ -218,43 +218,36 @@ class MovieController extends Controller
         $cachedHtml = $this->getCachedFullPage('animespirit_info_show_' . $movieId, $movieId);
         // избавление от ВВ кодов
         $cachedHtml = $this->clearBBCodes($cachedHtml);
-
         $html = new Htmldom($cachedHtml);
         //files
         $files = array();
 
         
 
-        foreach ($html->find('h3[id^=top_div_]') as $file) {
-            foreach ($html->find('div.spoiler_holder') as $spoiler) {
-                dd($spoiler->innertext);
+        foreach ($html->find('div.spoiler_holder') as $file) {
+            $subtitle = $file->find(".spoiler_title",0)->plaintext;
+            preg_match_all('/<h3 id=\"top_div_\\d+\".*>(.*)<\\/h3>.*<p id=\"an_ul\\d+\".*>(.*)<\\/p>/iU', $file->innertext, $output_links);
+
+            list($match,$titles,$links) = $output_links;
+            foreach ($titles as $key=>$title){
+                if(strlen(trim($title)) > 3){
+                    $service = Parser::getVideoService($links[$key]);
+                    $download_link = $links[$key];
+                    if ($service !== 'sibnet' && $service !== 'vk') {
+                        $download_link = Parser::createDownloadLink($links[$key]);
+                    }
+
+                    $file_item = array(
+                        'service' => $service,
+                        'part' => "[$subtitle] ".$title,
+                        'original_link' => $links[$key],
+                        'download_link' => $download_link
+                    );
+                    array_push($files, $file_item);
+                }
             }
+
         }
-        /*foreach ($html->find('h3[onclick^="upAnime("]') as $file) {
-            //preg_match("/javascript:aniplay\\('(.*)','link(\\d+)'\\)/iU", $file->onclick, $output_file);
-            preg_match("/upAnime\\((\d+)\\)/iU", $file->onclick, $output_file);
-
-            $part_title = $file->plaintext;
-            if (strpos($part_title, '[hide]') === false) {
-                list($output_file, $id) = $output_file;
-
-                $link = $html->find("p#an_ul{$id}",0)->plaintext;
-                $download_link = $link;
-
-                /!*if ($system != 4) {
-                    $download_link = Parser::createDownloadLink($link);
-                }*!/
-
-                $file_item = array(
-                    'service' => Parser::getVideoService($link),
-                    'part' => $part_title,
-                    'original_link' => $link,
-                    'download_link' => $download_link
-                );
-                array_push($files, $file_item);
-            }
-        }*/
-
 
         $grouped_files_ = Arrays::group($files, function ($value) {
             return $value['part'];
@@ -400,16 +393,12 @@ class MovieController extends Controller
     private function clearBBCodes($html)
     {
         $output = $html;
-        $output =str_replace('[hide]','-qwe-',$output);
+        $output =str_replace('[hide]','',$output);
+        $output =str_replace('[/sss]','',$output);
         $output =preg_replace('/\[(bgc|sbgc)=#[a-z0-9].*\]/iU', '', $output);
 
-
-        $output =preg_replace('/\[sss=.*colorstart-->(.*)<!--colorend.*\](.*)\[\/sss\]/iU',
-            "<div class='spoiler_holder'><h3 id='ss5'>$1</h3><div id='spoiler_'><center>$2</center></div></div>",
-            $output);
-
-        $output =preg_replace('/\[sss=.*colorstart-->(.*)<!--colorend.*\](.*)\[\/sss\]/iU',
-            "<div class='spoiler_holder'><h3 id='ss5'>$1</h3><div id='spoiler_'><center>$2</center></div></div>",
+        $output =preg_replace('/\[sss=.*colorstart-->(.*)<!--colorend.*\]/iU',
+            "</div><hr><div class='spoiler_holder'><h1 class='spoiler_title'>$1</h1><h3 id=\"top_div_4\" onclick=\"upAnime(4);\">",
             $output);
 
         return $output;
