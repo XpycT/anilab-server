@@ -216,56 +216,46 @@ class MovieController extends Controller
     {
         // get page from cache
         $cachedHtml = $this->getCachedFullPage('animespirit_info_show_' . $movieId, $movieId);
+        // избавление от ВВ кодов
+        $cachedHtml = $this->clearBBCodes($cachedHtml);
+
         $html = new Htmldom($cachedHtml);
-        $title = trim(mb_split('/', $html->find('h1.heading', 0)->plaintext)[0]);
         //files
         $files = array();
-        foreach ($html->find('.fullstory div.maincont a[onclick^=videoPlayer]') as $file) {
-            //preg_match("/javascript:aniplay\\('(.*)','link(\\d+)'\\)/iU", $file->onclick, $output_file);
-            preg_match("/videoPlayer\\('(.*)',\\s'(\\d+)',\\s'(.*)'\\)\\;return/iU", $file->onclick, $output_file);
-            $part_title = $file->innertext;
 
-            list($output_file, $id, $system, $url) = $output_file;
+        
 
-            $link = '';
-            switch ($system) {
-                case 1:
-                    $link = sprintf('http://video.rutube.ru/%s', $url);
-                    break;
-                case 2:
-                    $link = sprintf('http://www.youtube.com/embed/%s', $url);
-                    break;
-                case 3:
-                    $link = sprintf('http://v.kiwi.kz/v/%s', $url);
-                    break;
-                case 4:
-                    $link = sprintf('http://video.sibnet.ru/shell.swf?videoid=%s', $url);
-                    break;
-                case 5:
-                    if (count($url) === 56 || count($url) === 45) {
-                        $link = sprintf('http://myvi.ru/ru/flash/player/%s', $url);
-                    } else {
-                        $link = sprintf('http://myvi.ru/ru/flash/player/pre/%s', $url);
-                    }
-                    break;
-                case 6:
-                    $link = sprintf('%s', $url);
-                    break;
+        foreach ($html->find('h3[id^=top_div_]') as $file) {
+            foreach ($html->find('div.spoiler_holder') as $spoiler) {
+                dd($spoiler->innertext);
             }
-
-            $download_link = $link;
-            if ($system != 4) {
-                $download_link = Parser::createDownloadLink($link);
-            }
-
-            $file_item = array(
-                'service' => Parser::getVideoService($link),
-                'part' => $part_title,
-                'original_link' => $link,
-                'download_link' => $download_link
-            );
-            array_push($files, $file_item);
         }
+        /*foreach ($html->find('h3[onclick^="upAnime("]') as $file) {
+            //preg_match("/javascript:aniplay\\('(.*)','link(\\d+)'\\)/iU", $file->onclick, $output_file);
+            preg_match("/upAnime\\((\d+)\\)/iU", $file->onclick, $output_file);
+
+            $part_title = $file->plaintext;
+            if (strpos($part_title, '[hide]') === false) {
+                list($output_file, $id) = $output_file;
+
+                $link = $html->find("p#an_ul{$id}",0)->plaintext;
+                $download_link = $link;
+
+                /!*if ($system != 4) {
+                    $download_link = Parser::createDownloadLink($link);
+                }*!/
+
+                $file_item = array(
+                    'service' => Parser::getVideoService($link),
+                    'part' => $part_title,
+                    'original_link' => $link,
+                    'download_link' => $download_link
+                );
+                array_push($files, $file_item);
+            }
+        }*/
+
+
         $grouped_files_ = Arrays::group($files, function ($value) {
             return $value['part'];
         });
@@ -290,7 +280,9 @@ class MovieController extends Controller
 
         //fetch first comments page
         foreach ($html->find('table[width=100%]') as $comment_item) {
-            if($comment_item->find('div[id^=comm-id]',0) && $comment_item->find('td.slink', 0)){
+            if($comment_item->find('div[id^=comm-id]',0)
+                && $comment_item->find('td.slink', 0)
+            && $comment_item->find('img[src^="http://images.animespirit.ru/uploads/fotos/"]', 0)){
 
                 $tmpId = explode('-', $comment_item->find('div[id^=comm-id]',0)->id);
                 $commentId = array_pop($tmpId);
@@ -397,6 +389,30 @@ class MovieController extends Controller
         unset($client);
         return $responseUtf8;
         //});
+    }
+
+    /**
+     * Clear BBCodes
+     *
+     * @param $html
+     * @return mixed
+     */
+    private function clearBBCodes($html)
+    {
+        $output = $html;
+        $output =str_replace('[hide]','-qwe-',$output);
+        $output =preg_replace('/\[(bgc|sbgc)=#[a-z0-9].*\]/iU', '', $output);
+
+
+        $output =preg_replace('/\[sss=.*colorstart-->(.*)<!--colorend.*\](.*)\[\/sss\]/iU',
+            "<div class='spoiler_holder'><h3 id='ss5'>$1</h3><div id='spoiler_'><center>$2</center></div></div>",
+            $output);
+
+        $output =preg_replace('/\[sss=.*colorstart-->(.*)<!--colorend.*\](.*)\[\/sss\]/iU',
+            "<div class='spoiler_holder'><h3 id='ss5'>$1</h3><div id='spoiler_'><center>$2</center></div></div>",
+            $output);
+
+        return $output;
     }
 
 
