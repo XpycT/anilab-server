@@ -232,15 +232,20 @@ class MovieController extends Controller
             foreach ($titles as $key=>$title){
                 if(strlen(trim($title)) > 3){
                     $service = Parser::getVideoService($links[$key]);
-                    $download_link = $links[$key];
+
+                    $link = preg_replace('/^\\/\\//iU','http://',$links[$key]);
+                    $link = preg_replace("/^http.*sibnet.*\\/(\\w+).flv/iU",'http://video.sibnet.ru/shell.php?videoid=$1',$link);
+
+                    $download_link = $link;
                     if ($service !== 'sibnet' && $service !== 'vk') {
-                        $download_link = Parser::createDownloadLink($links[$key]);
+                        $download_link = Parser::createDownloadLink($link);
                     }
+
 
                     $file_item = array(
                         'service' => $service,
                         'part' => "[$subtitle] ".$title,
-                        'original_link' => $links[$key],
+                        'original_link' => $link,
                         'download_link' => $download_link
                     );
                     array_push($files, $file_item);

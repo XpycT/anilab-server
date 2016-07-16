@@ -237,6 +237,9 @@ class Parser
                 });
 
                 break;
+            case 'youtube':
+                    return $original_link;
+                break;
         }
         return $download_link;
     }
