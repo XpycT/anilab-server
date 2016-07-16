@@ -254,6 +254,35 @@ class MovieController extends Controller
 
         }
 
+        // если файлы не найдены - пытаемся пропарсить только видео
+        if(count($files) === 0){
+            //dd($cachedHtml);
+            foreach ($html->find('h3[id^=top_div_]') as $item){
+                //$title = trim($item->plaintext);
+                $title = preg_replace('/(sibnet|myvi|youtube|vkontakte)$/iU','',trim($item->plaintext));
+                $id = mb_split('_', $item->id)[2];
+                $url = $html->find("p#an_ul$id",0)->plaintext;
+
+                $service = Parser::getVideoService($url);
+
+                $link = preg_replace('/^\\/\\//iU','http://',$url);
+                $link = preg_replace("/^http.*sibnet.*\\/(\\w+).flv/iU",'http://video.sibnet.ru/shell.php?videoid=$1',$link);
+
+                $download_link = $link;
+                if ($service !== 'sibnet' && $service !== 'vk') {
+                    $download_link = Parser::createDownloadLink($link);
+                }
+
+                $file_item = array(
+                    'service' => $service,
+                    'part' => trim($title),
+                    'original_link' => $link,
+                    'download_link' => $download_link
+                );
+                array_push($files, $file_item);
+            }
+        }
+
         $grouped_files_ = Arrays::group($files, function ($value) {
             return $value['part'];
         });
