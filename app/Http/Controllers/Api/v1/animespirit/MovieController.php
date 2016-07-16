@@ -430,7 +430,7 @@ class MovieController extends Controller
         $output = $html;
         $output =str_replace('[hide]','',$output);
         $output =str_replace('[/sss]','',$output);
-        $output =preg_replace('/\[(bgc|sbgc)=#[a-z0-9].*\]/iU', '', $output);
+        $output =preg_replace('/\[(bgc|sbgc)\s?=\s?#[a-z0-9].*\]/iU', '', $output);
 
         $output =preg_replace('/\[sss=.*colorstart-->(.*)<!--colorend.*\]/iU',
             "</div><hr><div class='spoiler_holder'><h1 class='spoiler_title'>$1</h1><h3 id=\"top_div_4\" onclick=\"upAnime(4);\">",
