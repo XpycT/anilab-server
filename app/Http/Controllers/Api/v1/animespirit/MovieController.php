@@ -269,7 +269,7 @@ class MovieController extends Controller
                 $link = preg_replace("/^http.*sibnet.*\\/(\\w+).flv/iU",'http://video.sibnet.ru/shell.php?videoid=$1',$link);
 
                 $download_link = $link;
-                if ($service !== 'sibnet' && $service !== 'vk') {
+                if ($service !== 'sibnet') {
                     $download_link = Parser::createDownloadLink($link);
                 }
 
