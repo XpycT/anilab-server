@@ -264,7 +264,7 @@ class MovieController extends Controller
                 $title =str_replace('[/ss]','',trim($item->plaintext));
 
                 $title = preg_replace('/\[ss=.*\]/iU','',trim($title));
-                $title = preg_replace('/-?(sibnet|myvi|youtube|vkontakte)-?$/iU','',$title);
+                $title = preg_replace('/(-|\[)?(sibnet|myvi|youtube|vkontakte|Муви|Сибнет)(-|\])?$/iU','',$title);
                 $id = mb_split('_', $item->id)[2];
                 $url = $html->find("p#an_ul$id",0)->plaintext;
 
