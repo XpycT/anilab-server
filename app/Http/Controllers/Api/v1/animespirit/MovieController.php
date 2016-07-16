@@ -230,7 +230,8 @@ class MovieController extends Controller
 
             list($match,$titles,$links) = $output_links;
             foreach ($titles as $key=>$title){
-                if(strlen(trim($title)) > 3){
+                $title = str_replace('\"',"'",strip_tags($title));
+                if(strlen(trim($links[$key])) > 5){
                     $service = Parser::getVideoService($links[$key]);
 
                     $link = preg_replace('/^\\/\\//iU','http://',$links[$key]);
