@@ -18,8 +18,6 @@ use App\Helpers;
 
 class MovieController extends Controller
 {
-    const protection_key = 'cd4cc9bffcb72bca5f88b3d8862cab4a';
-
     /**
      * Display a listing of the resource.
      *
@@ -361,7 +359,7 @@ class MovieController extends Controller
         $client = new Client(array(
             'base_uri' => env('BASE_URL_ANIMESPIRIT')
         ));
-        $jar = CookieJar::fromArray(['__DDOS_COOKIE' => self::protection_key], 'www.animespirit.ru');
+        $jar = CookieJar::fromArray(['__DDOS_COOKIE' => getenv('ANIMESPIRIT_KEY')], 'www.animespirit.ru');
         $response = $client->get($url, ['cookies' => $jar, 'headers' => ['User-Agent' => config('api.userAgent')]]);
         $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
 
@@ -415,7 +413,7 @@ class MovieController extends Controller
         $client = new Client(array(
             'base_uri' => env('BASE_URL_ANIMESPIRIT')
         ));
-        $jar = CookieJar::fromArray(['__DDOS_COOKIE' => self::protection_key], 'www.animespirit.ru');
+        $jar = CookieJar::fromArray(['__DDOS_COOKIE' => getenv('ANIMESPIRIT_KEY')], 'www.animespirit.ru');
         $response = $client->get($url, ['cookies' => $jar, 'headers' => ['User-Agent' => config('api.userAgent')]]);
         $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
         unset($client);
