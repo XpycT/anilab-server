@@ -354,7 +354,7 @@ class MovieController extends Controller
      */
     private function getCachedPage($cache_key, $page, $path)
     {
-        //return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page, $path) {
+        return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($page, $path) {
         $url = isset($path) ? urldecode($path) . 'page/' . $page . '/' : '/page/' . $page . '/';
         $client = new Client(array(
             'base_uri' => env('BASE_URL_ANIMESPIRIT')
@@ -365,7 +365,7 @@ class MovieController extends Controller
 
         unset($client);
         return $responseUtf8;
-        //});
+        });
     }
 
     /**
@@ -408,7 +408,7 @@ class MovieController extends Controller
      */
     private function getCachedFullPage($cache_key, $movieId)
     {
-        //return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($movieId) {
+        return Cache::remember($cache_key, env('PAGE_CACHE_MIN'), function () use ($movieId) {
         $url = '/index.php?newsid=' . $movieId;
         $client = new Client(array(
             'base_uri' => env('BASE_URL_ANIMESPIRIT')
@@ -418,7 +418,7 @@ class MovieController extends Controller
         $responseUtf8 = mb_convert_encoding($response->getBody(true), 'utf-8', 'cp1251');
         unset($client);
         return $responseUtf8;
-        //});
+        });
     }
 
     /**
