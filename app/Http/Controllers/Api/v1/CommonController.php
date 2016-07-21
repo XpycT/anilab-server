@@ -24,4 +24,9 @@ class CommonController extends Controller
             'download_link'=> $download_link
         ],200);
     }
+
+    public function moonwalkUrl(Request $request){
+        $link = $request->get('url');
+        return Helpers\Parser::createDownloadLink($link);
+    }
 }

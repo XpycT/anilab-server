@@ -115,7 +115,7 @@ class Parser
                 // fix link
                 $link = explode('|', $original_link)[0];
 
-                //$download_link = Cache::remember(md5($link), env('PAGE_CACHE_MIN'), function () use ($link) {
+                $download_link = Cache::remember(md5($link), env('PAGE_CACHE_MIN'), function () use ($link) {
                 $client = new Client(['verify' => false]);
                 //get page with player
                 $response = $client->get($link);
@@ -166,7 +166,7 @@ class Parser
                 }
                 $html->clear();
                 unset($html);
-                //});
+                });
 
                 break;
             case 'kivvi':

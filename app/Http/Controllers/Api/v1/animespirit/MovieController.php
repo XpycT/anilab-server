@@ -272,8 +272,12 @@ class MovieController extends Controller
                 $link = preg_replace("/^http.*sibnet.*\\/(\\w+).flv/iU",'http://video.sibnet.ru/shell.php?videoid=$1',$link);
 
                 $download_link = $link;
-                if ($service !== 'sibnet') {
+                if ($service !== 'sibnet' && $service !== 'moonwalk') {
                     $download_link = Parser::createDownloadLink($link);
+                }
+
+                if($service === 'moonwalk'){
+                    $download_link = url('api/v1/moonwalk.m3u8?url='.$link);
                 }
 
                 $file_item = array(

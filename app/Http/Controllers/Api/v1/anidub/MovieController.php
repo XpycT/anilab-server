@@ -274,9 +274,13 @@ class MovieController extends Controller
 
             $download_link = $link;
             $videoService = Parser::getVideoService($link);
-            
-            if($videoService !== 'sibnet'){
+
+            if($videoService !== 'sibnet' && $videoService !== 'moonwalk'){
                 $download_link = Parser::createDownloadLink($link);
+            }
+
+            if($videoService === 'moonwalk'){
+                $download_link = url('api/v1/moonwalk.m3u8?url='.$link);
             }
 
             $file_item = array(

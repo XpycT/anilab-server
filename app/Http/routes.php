@@ -44,6 +44,7 @@ Route::group(array('prefix' => 'api/v1','middleware' => 'api'), function () {
     });
 
     Route::post('parse', 'Api\v1\CommonController@parseLink');
+    Route::get('moonwalk.m3u8', 'Api\v1\CommonController@moonwalkUrl');
 });
 Route::get('api/v1/anistar/image', 'Api\v1\anistar\MovieController@image');
 // Admin area
