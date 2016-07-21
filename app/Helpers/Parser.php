@@ -58,15 +58,15 @@ class Parser
                 //TODO можно сделать! ....
                 // http://myvi.ru/player/embed/html/o234L90Q3B_isAKmDzm9K3u9fM4KlFjmSR9v9ep5PCyYIBzb3DA63fWcfLCGYBlqv0
                 // http://myvi.ru/ru/flash/player/pre/ortLkmoLoXbrpAZca9OyMgvpB7XBC4L-YCoqPldXUWJEVRRHGSb2JhoZP4Ta_NE1l0
-                $tmp_link = str_replace('.tv','.ru',$original_link);
-                $tmp_link = str_replace('.tv','.ru',$original_link);
-                $tmp_link = str_replace('/embed/html/','/player/api/Video/Get/',$tmp_link);
-                $tmp_link = str_replace('/player/flash/','/player/api/Video/Get/',$tmp_link);
-                $tmp_link = str_replace('/ru/flash/player/pre/','/player/api/Video/Get/',$tmp_link);
-                $tmp_link = str_replace('/ru/','/',$tmp_link);
-                $tmp_link = str_replace('/player/player/','/player/',$tmp_link);
-                $tmp_link = str_replace('//','http://',$tmp_link);
-                $tmp_link = str_replace('http:http','http',$tmp_link);
+                $tmp_link = str_replace('.tv', '.ru', $original_link);
+                $tmp_link = str_replace('.tv', '.ru', $original_link);
+                $tmp_link = str_replace('/embed/html/', '/player/api/Video/Get/', $tmp_link);
+                $tmp_link = str_replace('/player/flash/', '/player/api/Video/Get/', $tmp_link);
+                $tmp_link = str_replace('/ru/flash/player/pre/', '/player/api/Video/Get/', $tmp_link);
+                $tmp_link = str_replace('/ru/', '/', $tmp_link);
+                $tmp_link = str_replace('/player/player/', '/player/', $tmp_link);
+                $tmp_link = str_replace('//', 'http://', $tmp_link);
+                $tmp_link = str_replace('http:http', 'http', $tmp_link);
                 //$tmp_link = $tmp_link.'?sig=1';
                 /*$client = new Client();
                 //get page with player
@@ -78,9 +78,9 @@ class Parser
                 break;
             case 'rutube':
                 $download_link = "";
-                $tmp_link = str_replace('//rutube.ru/play/embed/','',$original_link);
-                $tmp_link = str_replace('http:','',$tmp_link);
-                $tmp_link = str_replace('//video.rutube.ru/','',$tmp_link);
+                $tmp_link = str_replace('//rutube.ru/play/embed/', '', $original_link);
+                $tmp_link = str_replace('http:', '', $tmp_link);
+                $tmp_link = str_replace('//video.rutube.ru/', '', $tmp_link);
                 // https://rutube.ru/api/play/trackinfo/7888798/?sqr4374_compat=1
                 $download_link_page = sprintf('https://rutube.ru/api/play/trackinfo/%s/?sqr4374_compat=1', $tmp_link);
                 try {
@@ -115,54 +115,58 @@ class Parser
                 // fix link
                 $link = explode('|', $original_link)[0];
 
-                $download_link = Cache::remember(md5($link), env('PAGE_CACHE_MIN'), function () use ($link) {
-                    $client = new Client(['verify' => false]);
-                    //get page with player
-                    $response = $client->get($link);
-                    $html = new Htmldom($response->getBody(true));
-                    preg_match("/video_token: '(.*)'/iU", $html, $token_array);
-                    if (isset($token_array[1])) {
-                        preg_match("/access_key: '(.*)'/iU", $html, $access_array);
-                        preg_match("/d_id: (.*),/iU", $html, $did_array);
-                        /*preg_match("/'X-MOON-EXPIRED', \"(.*)\"/iU", $html, $xme_array);
-                        preg_match("/'X-MOON-TOKEN', \"(.*)\"/iU", $html, $xmt_array);*/
-                        preg_match("/setRequestHeader\\|\\|([^\\|]*)/i", $html, $contentData_array);
-                        preg_match("/<meta name=\"csrf-token\" content=\"(.*)\"/iU", $html, $csrf_array);
-                        if (isset($access_array[1])) {
-                            $response = $client->post('http://moonwalk.cc/sessions/create_new', [
-                                'form_params' => [
-                                    'partner'=> '',
-                                    'video_token' => $token_array[1],
-                                    'access_key' => $access_array[1],
-                                    'cd' => 0,
-                                    'd_id'=> $did_array[1],
-                                    'content_type'=> 'movie',
-                                ],
-                                'headers'=> [/*'X-MOON-EXPIRED' => $xme_array[1],'X-MOON-TOKEN' => $xmt_array[1],*/
-                                    'Host' => 'moonwalk.cc',
-                                    'Accept' => '*/*',
-                                    'Accept-Language' => 'en-US,en;q=0.5',
-                                    'Accept-Encoding' => "gzip, deflate",
-                                    'User-Agent' => config('api.userAgent'),
-                                    'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
-                                    'X-Requested-With' => "XMLHttpRequest",
-                                    //'Connection' => "keep-alive",
-                                    //'Referer' => $link,
-                                    'X-CSRF-Token' => $csrf_array[1],
-                                    //"Content-Data" => base64_encode($contentData_array[1]),
-                                    "Encoding-Pool" => base64_encode($contentData_array[1])
-                                ]
-                            ]);
-                            $jsonResponse = json_decode($response->getBody(true));
-                            //dd($jsonResponse);
-                            return $jsonResponse->manifest_m3u8;
-                        }
-                    }else{
-                        return false;
+                //$download_link = Cache::remember(md5($link), env('PAGE_CACHE_MIN'), function () use ($link) {
+                $client = new Client(['verify' => false]);
+                //get page with player
+                $response = $client->get($link);
+                $html = new Htmldom($response->getBody(true));
+                preg_match("/video_token: '(.*)'/iU", $html, $token_array);
+                if (isset($token_array[1])) {
+                    preg_match("/access_key: '(.*)'/iU", $html, $access_array);
+                    preg_match("/d_id: (.*),/iU", $html, $did_array);
+                    /*preg_match("/'X-MOON-EXPIRED', \"(.*)\"/iU", $html, $xme_array);
+                    preg_match("/'X-MOON-TOKEN', \"(.*)\"/iU", $html, $xmt_array);*/
+                    preg_match("/setRequestHeader\\|\\|([^\\|]*)/i", $html, $contentData_array);
+                    preg_match("/<meta name=\"csrf-token\" content=\"(.*)\"/iU", $html, $csrf_array);
+                    if (isset($access_array[1])) {
+
+                        $post_headers = [
+                            'form_params' => [
+                                'partner' => '',
+                                'video_token' => $token_array[1],
+                                'access_key' => $access_array[1],
+                                'cd' => 0,
+                                'd_id' => $did_array[1],
+                                'content_type' => 'movie',
+                            ],
+                            'headers' => [/*'X-MOON-EXPIRED' => $xme_array[1],'X-MOON-TOKEN' => $xmt_array[1],*/
+                                'Host' => 'moonwalk.cc',
+                                'Accept' => '*/*',
+                                'Accept-Language' => 'en-US,en;q=0.5',
+                                'Accept-Encoding' => "gzip, deflate",
+                                'User-Agent' => config('api.userAgent'),
+                                'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
+                                'X-Requested-With' => "XMLHttpRequest",
+                                //'Connection' => "keep-alive",
+                                //'Referer' => $link,
+                                'X-CSRF-Token' => $csrf_array[1],
+                                //"Content-Data" => base64_encode($contentData_array[1]),
+                                "Encoding-Pool" => base64_encode($contentData_array[1])
+                            ]
+                        ];
+
+                        $response = $client->post('http://moonwalk.cc/sessions/create_new', $post_headers);
+                        $jsonResponse = json_decode($response->getBody(true));
+
+                        $playlist = $client->get($jsonResponse->manifest_m3u8, $post_headers);
+                        return (string)$playlist->getBody(true);
                     }
-                    $html->clear();
-                    unset($html);
-                });
+                } else {
+                    return false;
+                }
+                $html->clear();
+                unset($html);
+                //});
 
                 break;
             case 'kivvi':
@@ -214,11 +218,11 @@ class Parser
                 }
 
                 unset($client);*/
-                $query_string = parse_url($original_link,PHP_URL_QUERY);
+                $query_string = parse_url($original_link, PHP_URL_QUERY);
                 parse_str($query_string, $get_array);
-                if(isset($get_array['oid']) && isset($get_array['id'])){
-                    $download_link = sprintf('http://vk.com/video.php?act=a_flash_vars&vid=%s_%s',$get_array['oid'],$get_array['id']);
-                }else{
+                if (isset($get_array['oid']) && isset($get_array['id'])) {
+                    $download_link = sprintf('http://vk.com/video.php?act=a_flash_vars&vid=%s_%s', $get_array['oid'], $get_array['id']);
+                } else {
                     $download_link = $original_link;
                 }
 
@@ -226,7 +230,7 @@ class Parser
 
             case 'sibnet':
                 // need http://video.sibnet.ru/video1844166 || http://video.sibnet.ru/shell.swf?videoid=1086484
-                $fix_url = str_replace('shell.swf?videoid=','video',$original_link);
+                $fix_url = str_replace('shell.swf?videoid=', 'video', $original_link);
                 $download_link = Cache::remember($fix_url, env('PAGE_CACHE_MIN'), function () use ($fix_url) {
                     try {
                         $client = new Client();
@@ -245,7 +249,7 @@ class Parser
 
                 break;
             case 'youtube':
-                    return $original_link;
+                return $original_link;
                 break;
         }
         return $download_link;
