@@ -114,7 +114,6 @@ class Parser
             case 'moonwalk':
                 // fix link
                 $link = explode('|', $original_link)[0];
-                //$download_link = str_replace('iframe', 'index.m3u8?cd=1', $link);
 
                 $download_link = Cache::remember(md5($link), env('PAGE_CACHE_MIN'), function () use ($link) {
                     $client = new Client(['verify' => false]);
@@ -127,10 +126,10 @@ class Parser
                         preg_match("/d_id: (.*),/iU", $html, $did_array);
                         /*preg_match("/'X-MOON-EXPIRED', \"(.*)\"/iU", $html, $xme_array);
                         preg_match("/'X-MOON-TOKEN', \"(.*)\"/iU", $html, $xmt_array);*/
-                        preg_match("/setRequestHeader\\|([^\\|]*)/i", $html, $contentData_array);
+                        preg_match("/setRequestHeader\\|\\|([^\\|]*)/i", $html, $contentData_array);
                         preg_match("/<meta name=\"csrf-token\" content=\"(.*)\"/iU", $html, $csrf_array);
                         if (isset($access_array[1])) {
-                            $response = $client->post('http://moonwalk.cc/sessions/create_session', [
+                            $response = $client->post('http://moonwalk.cc/sessions/create_new', [
                                 'form_params' => [
                                     'partner'=> '',
                                     'video_token' => $token_array[1],
@@ -140,14 +139,22 @@ class Parser
                                     'content_type'=> 'movie',
                                 ],
                                 'headers'=> [/*'X-MOON-EXPIRED' => $xme_array[1],'X-MOON-TOKEN' => $xmt_array[1],*/
-                                    'X-Requested-With' => 'XMLHttpRequest',
+                                    'Host' => 'moonwalk.cc',
+                                    'Accept' => '*/*',
+                                    'Accept-Language' => 'en-US,en;q=0.5',
+                                    'Accept-Encoding' => "gzip, deflate",
                                     'User-Agent' => config('api.userAgent'),
                                     'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
+                                    'X-Requested-With' => "XMLHttpRequest",
+                                    //'Connection' => "keep-alive",
+                                    //'Referer' => $link,
                                     'X-CSRF-Token' => $csrf_array[1],
-                                    "Content-Data" => base64_encode($contentData_array[1])
+                                    //"Content-Data" => base64_encode($contentData_array[1]),
+                                    "Encoding-Pool" => base64_encode($contentData_array[1])
                                 ]
                             ]);
                             $jsonResponse = json_decode($response->getBody(true));
+                            //dd($jsonResponse);
                             return $jsonResponse->manifest_m3u8;
                         }
                     }else{
