@@ -249,7 +249,8 @@ class Parser
 
                 break;
             case 'youtube':
-                return $original_link;
+                $link = preg_replace('/^ttps/iU','https',$original_link);
+                return $link;
                 break;
         }
         return $download_link;
