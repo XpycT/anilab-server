@@ -44,6 +44,7 @@ Route::group(array('prefix' => 'api/v1','middleware' => 'api'), function () {
     });
 
     Route::post('parse', 'Api\v1\CommonController@parseLink');
+    Route::post('parse_vk', 'Api\v1\CommonController@parseVkLink');
 
 });
 Route::get('api/v1/moonwalk.m3u8', 'Api\v1\CommonController@moonwalkUrl');
