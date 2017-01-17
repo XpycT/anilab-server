@@ -1,0 +1,19 @@
+{
+  "name": "AniLab",
+  "description": "AniLab service",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "vendor/bower_dl",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap-sass": "~3.3.5",
+    "jquery": "~2.1.4",
+    "fontawesome": "~4.3.0",
+    "datatables": "~1.10.7",
+    "datatables-plugins": "~1.10.7",
+    "flexboxgrid": "~6.2.0"
+  }
+}

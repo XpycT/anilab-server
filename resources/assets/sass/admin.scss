@@ -1,0 +1,15 @@
+@import url(http://fonts.googleapis.com/css?family=Roboto:300,400,500,700&subset=latin,cyrillic);
+
+$btn-font-weight: 300;
+$font-family-sans-serif: "Roboto", Helvetica, Arial, sans-serif;
+
+
+@import "variables";
+@import "bootstrap/bootstrap";
+@import "bootswatch";
+@import "fontawesome/font-awesome";
+@import "others/dataTables.bootstrap";
+
+body, label, .checkbox label {
+  font-weight: 300;
+}
